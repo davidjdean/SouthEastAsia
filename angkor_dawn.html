@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Angkor Wat Dawn Expedition | 10 Feb 2027</title>
+  <title>Angkor Wat: Dawn & East Traverse | 10 Feb 2027</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
   <style>
     :root {
       --bg: #090d16;
@@ -16,7 +20,7 @@
       --muted: #94a3b8;
       --danger: #ef4444;
       --teal: #14b8a6;
-      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -25,25 +29,24 @@
       color: var(--text);
       font-family: var(--sans);
       line-height: 1.5;
-      padding-bottom: 90px;
+      padding-bottom: 96px;
     }
 
-    /* Sticky Header */
     header {
       position: sticky;
       top: 0;
-      z-index: 100;
-      background: rgba(19, 27, 46, 0.92);
+      z-index: 1000;
+      background: rgba(19, 27, 46, 0.94);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
-      padding: 14px 18px;
+      padding: 12px 16px;
     }
-    .pill-row { display: flex; gap: 8px; margin-bottom: 6px; }
+    .pill-row { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
     .pill {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
-      letter-spacing: 0.6px;
-      padding: 3px 10px;
+      letter-spacing: 0.5px;
+      padding: 2px 10px;
       border-radius: 999px;
       text-transform: uppercase;
       background: var(--surface-elevated);
@@ -51,103 +54,138 @@
       border: 1px solid var(--border);
     }
     .pill.time { background: #3b2a0c; color: #fbbf24; border-color: #78350f; }
-    h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
+    h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.01em; }
 
-    main { max-width: 680px; margin: 0 auto; padding: 16px; }
+    main { max-width: 680px; margin: 0 auto; padding: 14px; }
 
-    /* Map Graphic Container */
-    .map-card {
+    /* Map Card & Leaflet Container */
+    .map-container {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 20px;
+      border-radius: 12px;
       overflow: hidden;
+      margin-bottom: 18px;
     }
     .map-header {
+      padding: 10px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      background: var(--surface-elevated);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .map-header h2 { font-size: 0.88rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
-    .map-svg-wrap {
-      background: #0f172a;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      padding: 10px;
-      position: relative;
-    }
-    svg text { font-family: var(--sans); font-size: 9px; fill: var(--muted); }
+    #map { height: 280px; width: 100%; z-index: 10; }
 
-    /* Notice Card */
-    .notice {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
+    /* Driver & Operational Warning */
+    .driver-notice {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.35);
       border-radius: 10px;
       padding: 12px 14px;
-      margin-bottom: 20px;
-      display: flex;
-      gap: 12px;
+      margin-bottom: 18px;
+      font-size: 0.82rem;
     }
-    .notice-icon { font-size: 1.2rem; }
-    .notice h3 { font-size: 0.85rem; font-weight: 700; color: #fca5a5; }
-    .notice p { font-size: 0.78rem; color: #cbd5e1; margin-top: 2px; }
+    .driver-notice strong { color: var(--accent); display: block; margin-bottom: 2px; }
 
-    /* Timeline Section */
-    .timeline { position: relative; padding-left: 24px; border-left: 2px solid var(--border); margin-left: 10px; }
+    /* Timeline Stepper */
+    .timeline { position: relative; padding-left: 20px; border-left: 2px solid var(--border); margin-left: 10px; }
     .step-card {
       position: relative;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-      transition: all 0.2s ease;
+      margin-bottom: 20px;
+      overflow: hidden;
       cursor: pointer;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .step-card:hover, .step-card.active {
       border-color: var(--accent);
-      background: var(--surface-elevated);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
     }
-    .marker {
+    .step-marker {
       position: absolute;
-      left: -33px;
+      left: -29px;
       top: 18px;
       width: 16px;
       height: 16px;
       border-radius: 50%;
       background: var(--bg);
       border: 3px solid var(--accent);
+      z-index: 20;
     }
-    .step-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .step-time { font-size: 0.75rem; font-weight: 800; color: var(--accent); text-transform: uppercase; }
-    .step-stage { font-size: 0.7rem; color: var(--muted); background: var(--bg); padding: 2px 8px; border-radius: 6px; }
-    .step-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
-    .step-desc { font-size: 0.84rem; color: #cbd5e1; margin-bottom: 10px; }
 
-    /* Field Chips */
-    .chip-grid {
+    /* Photo Component */
+    .step-media {
+      width: 100%;
+      height: 160px;
+      background-color: var(--surface-elevated);
+      overflow: hidden;
+      position: relative;
+    }
+    .step-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .step-media-badge {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(9, 13, 22, 0.75);
+      backdrop-filter: blur(4px);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: #cbd5e1;
+    }
+
+    .step-body { padding: 14px; }
+    .step-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .step-time { font-size: 0.75rem; font-weight: 800; color: var(--accent); text-transform: uppercase; }
+    .step-pin { font-size: 0.7rem; color: var(--teal); background: rgba(20, 184, 166, 0.1); padding: 2px 6px; border-radius: 4px; }
+    .step-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+    .step-desc { font-size: 0.85rem; color: #cbd5e1; margin-bottom: 10px; }
+    
+    /* Micro Grid for Field Observations */
+    .micro-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr 1fr;
       gap: 6px;
       background: rgba(9, 13, 22, 0.6);
       padding: 10px;
       border-radius: 8px;
       font-size: 0.75rem;
+      margin-bottom: 10px;
     }
-    .chip-label { color: var(--muted); }
-    .chip-val { font-weight: 600; color: #fff; text-align: right; }
+    .micro-lbl { color: var(--muted); }
+    .micro-val { font-weight: 600; color: #fff; text-align: right; }
 
-    /* Bottom Bar */
-    .dock {
+    /* Navigation Link Hook */
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* Fixed Bottom Dock */
+    .bottom-dock {
       position: fixed;
       bottom: 0; left: 0; right: 0;
       background: rgba(19, 27, 46, 0.95);
       backdrop-filter: blur(12px);
       border-top: 1px solid var(--border);
-      padding: 12px 20px;
+      padding: 10px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -155,186 +193,246 @@
       margin: 0 auto;
       z-index: 1000;
     }
-    .dock-info strong { display: block; font-size: 0.85rem; color: var(--accent); }
-    .dock-info span { font-size: 0.75rem; color: var(--muted); }
-    .dock-btn {
-      background: var(--accent);
-      color: #090d16;
-      font-weight: 700;
-      padding: 10px 18px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-size: 0.85rem;
-      border: none;
+    .dock-rally strong { display: block; font-size: 0.82rem; color: var(--accent); }
+    .dock-rally span { font-size: 0.75rem; color: var(--muted); }
+    .dock-actions { display: flex; gap: 8px; }
+    .btn-secondary {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
       cursor: pointer;
     }
+    .btn-primary {
+      background: var(--accent);
+      border: none;
+      color: #090d16;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    /* Quick Driver Modal (Local Storage Backed) */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      max-width: 400px;
+      width: 100%;
+      padding: 20px;
+    }
+    .modal-card h3 { font-size: 1rem; margin-bottom: 12px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
+    .form-group input {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.85rem;
+    }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
   </style>
 </head>
 <body>
 
+  <!-- Sticky Top Context -->
   <header>
     <div class="pill-row">
       <span class="pill">Day 05</span>
       <span class="pill">10 Feb 2027</span>
       <span class="pill time">05:00 – 08:00</span>
+      <span class="pill" style="color:var(--teal)">East Traverse</span>
     </div>
-    <h1>Angkor Wat Dawn & Bakan Ascent</h1>
+    <h1>Angkor Wat: Dawn & Central Sanctuary</h1>
   </header>
 
   <main>
-    <!-- Vector Map / Site Route Schematic -->
-    <div class="map-card">
+    <!-- Map Canvas -->
+    <div class="map-container">
       <div class="map-header">
-        <h2>Site Plan & Tactical Route</h2>
-        <span style="font-size:0.75rem; color:var(--teal)">● High Precision Schematic</span>
+        <span>Tactical Route & Waypoints</span>
+        <span style="color:var(--teal)">Satellite Layer</span>
       </div>
-      <div class="map-svg-wrap">
-        <svg viewBox="0 0 500 240" width="100%" height="auto" style="display:block;">
-          <!-- Outer Moat -->
-          <rect x="10" y="10" width="480" height="220" fill="none" stroke="#243254" stroke-width="8" rx="6" />
-          <text x="25" y="30" fill="#3b82f6" font-size="10" font-weight="bold">WEST MOAT</text>
-          
-          <!-- Outer Wall & Western Gopura Entrance -->
-          <rect x="70" y="35" width="370" height="170" fill="#131b2e" stroke="#334155" stroke-width="2" />
-          <rect x="70" y="105" width="10" height="30" fill="#f59e0b" />
-          
-          <!-- Causeway Bridge -->
-          <line x1="20" y1="120" x2="70" y2="120" stroke="#f59e0b" stroke-width="4" stroke-dasharray="2 2" />
-          
-          <!-- Main Inner Causeway -->
-          <line x1="80" y1="120" x2="250" y2="120" stroke="#cbd5e1" stroke-width="3" />
-          
-          <!-- Left Reflection Pool -->
-          <rect x="210" y="70" width="45" height="30" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" rx="3" />
-          <text x="214" y="88" fill="#38bdf8" font-size="7">North Pond</text>
-
-          <!-- Right Pool -->
-          <rect x="210" y="140" width="45" height="30" fill="#1e293b" stroke="#475569" stroke-width="1" rx="3" />
-          
-          <!-- Central Enclosure & Bakan Tower -->
-          <rect x="270" y="60" width="140" height="120" fill="#1a253f" stroke="#64748b" stroke-width="1.5" />
-          <!-- 5 Towers -->
-          <circle cx="340" cy="120" r="16" fill="#f59e0b" fill-opacity="0.2" stroke="#f59e0b" stroke-width="2" />
-          <circle cx="340" cy="120" r="5" fill="#f59e0b" />
-          <circle cx="300" cy="85" r="4" fill="#94a3b8" />
-          <circle cx="380" cy="85" r="4" fill="#94a3b8" />
-          <circle cx="300" cy="155" r="4" fill="#94a3b8" />
-          <circle cx="380" cy="155" r="4" fill="#94a3b8" />
-          <text x="315" y="123" fill="#fff" font-weight="bold" font-size="8">BAKAN</text>
-          
-          <!-- Walking Path Flow Line -->
-          <path d="M 20 120 L 210 95 L 285 120 L 340 120 L 380 120" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" />
-          
-          <!-- Numbered Pin Stops -->
-          <!-- Pin 1 -->
-          <circle cx="35" cy="120" r="7" fill="#ef4444" />
-          <text x="32" y="123" fill="#fff" font-weight="bold" font-size="8">1</text>
-          <!-- Pin 2 -->
-          <circle cx="215" cy="95" r="7" fill="#ef4444" />
-          <text x="212" y="98" fill="#fff" font-weight="bold" font-size="8">2</text>
-          <!-- Pin 3 -->
-          <circle cx="340" cy="120" r="7" fill="#ef4444" />
-          <text x="337" y="123" fill="#fff" font-weight="bold" font-size="8">3</text>
-          <!-- Pin 4 -->
-          <circle cx="385" cy="120" r="7" fill="#ef4444" />
-          <text x="382" y="123" fill="#fff" font-weight="bold" font-size="8">4</text>
-        </svg>
-      </div>
+      <div id="map"></div>
     </div>
 
-    <!-- Security & Code Notice -->
-    <div class="notice">
-      <div class="notice-icon">⚠️</div>
-      <div>
-        <h3>Strict Bakan Sanctuary Dress Code</h3>
-        <p>Cover shoulders and knees with actual clothing (shawls/scarves over bare shoulders are rejected). No hats inside the sanctuary. Footwear must handle steep wooden steps.</p>
-      </div>
+    <!-- Traverse Driver Directive -->
+    <div class="driver-notice">
+      <strong>⚠️ Critical Driver Directive: West Drop-Off → East Pick-Up</strong>
+      Explain clearly to the driver at 05:00: Drop off at the <em>West Gate</em>. The driver must drive around to wait at the <em>East Gate parking track</em> for pickup at 08:00. No return to West Gate!
     </div>
 
-    <!-- Tactical Steps -->
+    <!-- Stepper Timeline -->
     <div class="timeline">
 
-      <!-- Stop 1 -->
-      <div class="step-card active">
-        <div class="marker"></div>
-        <div class="step-meta">
-          <span class="step-time">05:00 – 05:25</span>
-          <span class="step-stage">Map Pin [1]</span>
+      <!-- Step 1 -->
+      <article class="step-card active" id="card-step-1" onclick="focusWaypoint(0)">
+        <div class="step-marker"></div>
+        <div class="step-media">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Angkor_Wat_outer_gatehouse_west.jpg/800px-Angkor_Wat_outer_gatehouse_west.jpg" alt="West Gopura Gatehouse" loading="lazy">
+          <span class="step-media-badge">West Outer Gopura</span>
         </div>
-        <div class="step-title">West Moat Pontoon & Outer Gopura</div>
-        <p class="step-desc">Tuk-tuk drop-off at West Moat perimeter. Cross the floating bridge in darkness to reach the Western Outer Gatehouse.</p>
-        <div class="chip-grid">
-          <span class="chip-label">Light:</span>
-          <span class="chip-val">Pitch Black (Torches on)</span>
-          <span class="chip-label">Terrain:</span>
-          <span class="chip-val">Floating bridge / Sandstone</span>
+        <div class="step-body">
+          <div class="step-meta">
+            <span class="step-time">05:00 – 05:25</span>
+            <span class="step-pin">Waypoint 1</span>
+          </div>
+          <h2 class="step-title">West Moat Bridge & Outer Gopura</h2>
+          <p class="step-desc">Tuk-tuk drop-off at West Gate curb. Walk across the pontoon bridge in pitch darkness. Pass through the massive western gatehouse tower into the outer courtyard.</p>
+          <div class="micro-grid">
+            <span class="micro-lbl">What to Observe:</span>
+            <span class="micro-val">Eight-armed Vishnu statue in right tower</span>
+            <span class="micro-lbl">Surface:</span>
+            <span class="micro-val">Uneven sandstone; use headlamps</span>
+          </div>
+          <a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=13.41246,103.85873" target="_blank" onclick="event.stopPropagation()">↗ Open West Gate in Google Maps</a>
         </div>
-      </div>
+      </article>
 
-      <!-- Stop 2 -->
-      <div class="step-card">
-        <div class="marker"></div>
-        <div class="step-meta">
-          <span class="step-time">05:25 – 06:15</span>
-          <span class="step-stage">Map Pin [2]</span>
+      <!-- Step 2 -->
+      <article class="step-card" id="card-step-2" onclick="focusWaypoint(1)">
+        <div class="step-marker"></div>
+        <div class="step-media">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Angkor_Wat_sunrise_reflection.jpg/800px-Angkor_Wat_sunrise_reflection.jpg" alt="Left Pond Sunrise Reflection" loading="lazy">
+          <span class="step-media-badge">North Reflection Pool</span>
         </div>
-        <div class="step-title">Left Reflection Pool (Positioning)</div>
-        <p class="step-desc">Stake out a position on the north pond's front edge. The five towers reflect cleanly in the calm water as the sky turns violet to deep gold.</p>
-        <div class="chip-grid">
-          <span class="chip-label">Civil Twilight:</span>
-          <span class="chip-val">06:05</span>
-          <span class="chip-label">Sun Behind Towers:</span>
-          <span class="chip-val">06:28</span>
-          <span class="chip-label">Tactical Note:</span>
-          <span class="chip-val">Do NOT wait for full glare</span>
+        <div class="step-body">
+          <div class="step-meta">
+            <span class="step-time">05:25 – 06:15</span>
+            <span class="step-pin">Waypoint 2</span>
+          </div>
+          <h2 class="step-title">North Reflection Pool (Dawn Station)</h2>
+          <p class="step-desc">Walk down the 350-metre raised sandstone causeway past the twin libraries. Position on the edge of the northern pond to catch the sky change behind the five lotus towers.</p>
+          <div class="micro-grid">
+            <span class="micro-lbl">Astronomical Dawn:</span>
+            <span class="micro-val">Civil Twilight ~06:05</span>
+            <span class="micro-lbl">Sun Edge Behind Towers:</span>
+            <span class="micro-val">~06:28</span>
+            <span class="micro-lbl">Breakaway Action:</span>
+            <span class="micro-val">Depart pond by 06:15 sharp</span>
+          </div>
+          <a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=13.41219,103.86474" target="_blank" onclick="event.stopPropagation()">↗ Open Reflection Pool in Google Maps</a>
         </div>
-      </div>
+      </article>
 
-      <!-- Stop 3 -->
-      <div class="step-card">
-        <div class="marker"></div>
-        <div class="step-meta">
-          <span class="step-time">06:20 – 07:25</span>
-          <span class="step-stage">Map Pin [3]</span>
+      <!-- Step 3 -->
+      <article class="step-card" id="card-step-3" onclick="focusWaypoint(2)">
+        <div class="step-marker"></div>
+        <div class="step-media">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Angkor_Wat_Bakan_stairs.jpg/800px-Angkor_Wat_Bakan_stairs.jpg" alt="Bakan Central Sanctuary Stairs" loading="lazy">
+          <span class="step-media-badge">Central Bakan Steps</span>
         </div>
-        <div class="step-title">Bakan Ascent (Central Sanctuary)</div>
-        <p class="step-desc">Walk straight through while the crowd is glued to the sunrise. Ascend the steep east wooden stairs before the 100-person capacity queue forms.</p>
-        <div class="chip-grid">
-          <span class="chip-label">Incline:</span>
-          <span class="chip-val">~70° Wooden Staircase</span>
-          <span class="chip-label">Crowd Surge:</span>
-          <span class="chip-val">Queue spikes after 06:50</span>
+        <div class="step-body">
+          <div class="step-meta">
+            <span class="step-time">06:20 – 07:15</span>
+            <span class="step-pin">Waypoint 3</span>
+          </div>
+          <h2 class="step-title">Central Sanctuary (Bakan Ascent)</h2>
+          <p class="step-desc">Enter the main cruciform cloister while the sunrise crowd remains behind at the pool. Ascend the steep wooden security staircase on the east side to the uppermost tier before the 100-person capacity queue forms.</p>
+          <div class="micro-grid">
+            <span class="micro-lbl">Dress Rule:</span>
+            <span class="micro-val">Cover shoulders & knees (strict)</span>
+            <span class="micro-lbl">Stair Incline:</span>
+            <span class="micro-val">~70° angle with handrails</span>
+            <span class="micro-lbl">View:</span>
+            <span class="micro-val">Golden light over jungle canopy</span>
+          </div>
+          <a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=13.41249,103.86701" target="_blank" onclick="event.stopPropagation()">↗ Open Bakan Sanctuary in Google Maps</a>
         </div>
-      </div>
+      </article>
 
-      <!-- Stop 4 -->
-      <div class="step-card">
-        <div class="marker"></div>
-        <div class="step-meta">
-          <span class="step-time">07:25 – 08:00</span>
-          <span class="step-stage">Map Pin [4]</span>
+      <!-- Step 4 -->
+      <article class="step-card" id="card-step-4" onclick="focusWaypoint(3)">
+        <div class="step-marker"></div>
+        <div class="step-media">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Angkor_Wat_Bas-relief_Churning_of_the_Ocean_of_Milk.jpg/800px-Angkor_Wat_Bas-relief_Churning_of_the_Ocean_of_Milk.jpg" alt="Churning of the Ocean of Milk" loading="lazy">
+          <span class="step-media-badge">East Gallery Reliefs</span>
         </div>
-        <div class="step-title">East Bas-Reliefs & Shaded Library Exit</div>
-        <p class="step-desc">Descend from Bakan into the cool morning corridors. Inspect the <em>Churning of the Ocean of Milk</em> gallery lit by the early morning sun angle, then exit West.</p>
-        <div class="chip-grid">
-          <span class="chip-label">Wall Lighting:</span>
-          <span class="chip-val">Direct Low Morning Light</span>
-          <span class="chip-label">Exit Route:</span>
-          <span class="chip-val">Return to West Library</span>
+        <div class="step-body">
+          <div class="step-meta">
+            <span class="step-time">07:15 – 07:45</span>
+            <span class="step-pin">Waypoint 4</span>
+          </div>
+          <h2 class="step-title">East Gallery: Churning of the Ocean of Milk</h2>
+          <p class="step-desc">Descend from the central tower and head directly into the third enclosure's eastern gallery. The low morning sun illuminates this 49-metre masterpiece of 88 devas and 92 asuras pulling the serpent Vasuki.</p>
+          <div class="micro-grid">
+            <span class="micro-lbl">Lighting:</span>
+            <span class="micro-val">Direct low-angle eastern sun</span>
+            <span class="micro-lbl">Atmosphere:</span>
+            <span class="micro-val">Quiet; tour groups are still at front</span>
+          </div>
+          <a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=13.41249,103.86795" target="_blank" onclick="event.stopPropagation()">↗ Open East Gallery in Google Maps</a>
         </div>
-      </div>
+      </article>
+
+      <!-- Step 5 -->
+      <article class="step-card" id="card-step-5" onclick="focusWaypoint(4)">
+        <div class="step-marker"></div>
+        <div class="step-media">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Angkor_Wat_East_Gate.jpg/800px-Angkor_Wat_East_Gate.jpg" alt="Angkor Wat East Gate Exit" loading="lazy">
+          <span class="step-media-badge">East Gate Shaded Exit</span>
+        </div>
+        <div class="step-body">
+          <div class="step-meta">
+            <span class="step-time">07:45 – 08:00</span>
+            <span class="step-pin">Waypoint 5</span>
+          </div>
+          <h2 class="step-title">Traverse Exit via East Gopura</h2>
+          <p class="step-desc">Step out through the eastern gallery doors onto the rear earth causeway. Follow the tranquil, shaded path through the forest to meet your waiting driver at the East Gate parking loop.</p>
+          <div class="micro-grid">
+            <span class="micro-lbl">Walking Distance:</span>
+            <span class="micro-val">~350m through shaded trees</span>
+            <span class="micro-lbl">Crowd Level:</span>
+            <span class="micro-val">Virtually empty</span>
+            <span class="micro-lbl">Pick-up Location:</span>
+            <span class="micro-val">East Gate access track</span>
+          </div>
+          <a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=13.41247,103.87063" target="_blank" onclick="event.stopPropagation()">↗ Open East Gate Pickup in Google Maps</a>
+        </div>
+      </article>
 
     </div>
   </main>
 
-  <!-- Bottom Rendezvous Dock -->
-  <div class="dock">
-    <div class="dock-info">
-      <strong>Rally: West Library @ 08:00</strong>
-      <span>All 4 meet here before Tuk-tuk leg</span>
+  <!-- Bottom Dock -->
+  <div class="bottom-dock">
+    <div class="dock-rally">
+      <strong>Rally @ East Gate: 08:00</strong>
+      <span id="dock-driver-name">Driver: Not Set</span>
     </div>
-    <button class="dock-btn" onclick="alert('Driver Contact: +855 ...')">Call Driver</button>
+    <div class="dock-actions">
+      <button class="btn-secondary" onclick="openDriverModal()">⚙ Edit Driver</button>
+      <a class="btn-primary" id="call-driver-btn" href="tel:">📞 Call Driver</a>
+    </div>
   </div>
 
-</body>
-</html>
+  <!-- Dynamic Driver Setup Modal -->
+  <div class="modal-overlay" id="driver-modal" onclick="closeDriverModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <h3>Set Today's Driver Info</h3>
+      <div class="form-group">
+        <label for="input-driver-name">Driver Name / Vehicle #</label>
+        <input type="text" id="input-driver-name" placeholder="e.g. Mr. Dara (Tuk-Tuk 42)">
+      </div>
+      <div class="form-group">
+        <label for="input-driver-phone">Phone / WhatsApp
