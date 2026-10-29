@@ -3,18 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Angkor Wat: Dawn & East Traverse | 10 Feb 2027</title>
-  
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  
+  <title>Angkor Wat: Dawn & Central Sanctuary | 10 Feb 2027</title>
   <style>
     :root {
       --bg: #0b0f19;
-      --card-bg: #141c2e;
+      --card: #141c2e;
       --border: #23304d;
       --accent: #f59e0b;
-      --accent-dim: rgba(245, 158, 11, 0.15);
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --teal: #14b8a6;
@@ -30,6 +25,7 @@
       padding-bottom: 96px;
     }
 
+    /* Sticky Header */
     header {
       position: sticky;
       top: 0;
@@ -55,9 +51,9 @@
 
     main { max-width: 680px; margin: 0 auto; padding: 14px; }
 
-    /* Map Box */
+    /* Google My Maps Embed Frame */
     .map-frame {
-      background: var(--card-bg);
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
@@ -75,9 +71,14 @@
       color: var(--text-muted);
       text-transform: uppercase;
     }
-    #map { height: 320px; width: 100%; background: #0b0f19; }
+    .map-frame iframe {
+      display: block;
+      width: 100%;
+      height: 360px;
+      border: none;
+    }
 
-    /* Directive */
+    /* Driver Directive */
     .directive {
       background: rgba(245, 158, 11, 0.1);
       border: 1px solid rgba(245, 158, 11, 0.4);
@@ -88,64 +89,34 @@
     }
     .directive strong { color: var(--accent); display: block; margin-bottom: 2px; }
 
-    /* Steps */
+    /* Waypoint Cards */
     .timeline { position: relative; padding-left: 18px; border-left: 2px solid var(--border); margin-left: 12px; }
     .step-card {
       position: relative;
-      background: var(--card-bg);
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: 10px;
-      margin-bottom: 20px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .step-card:hover, .step-card.active {
-      border-color: var(--accent);
-      box-shadow: 0 4px 20px var(--accent-dim);
+      padding: 14px;
+      margin-bottom: 18px;
     }
     .step-dot {
       position: absolute;
-      left: -28px;
-      top: 18px;
+      left: -27px;
+      top: 16px;
       width: 16px;
       height: 16px;
       border-radius: 50%;
       background: var(--bg);
       border: 3px solid var(--accent);
-      z-index: 10;
     }
-
-    /* Embedded Illustration Canvas */
-    .step-img-box {
-      width: 100%;
-      height: 150px;
-      background: #0f172a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-bottom: 1px solid var(--border);
-      position: relative;
-    }
-    .img-tag {
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
-      background: rgba(11, 15, 25, 0.85);
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      color: #e2e8f0;
-    }
-
-    .step-content { padding: 14px; }
     .step-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .step-clock { font-size: 0.75rem; font-weight: 800; color: var(--accent); }
     .step-num { font-size: 0.7rem; color: var(--teal); background: rgba(20, 184, 166, 0.15); padding: 2px 6px; border-radius: 4px; font-weight: 700; }
     .step-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
-    .step-summary { font-size: 0.85rem; color: #cbd5e1; margin-bottom: 12px; }
+    .step-desc { font-size: 0.85rem; color: #cbd5e1; margin-bottom: 10px; }
 
-    .data-matrix {
+    /* Tactical Info Box */
+    .info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 6px;
@@ -155,18 +126,26 @@
       font-size: 0.75rem;
       margin-bottom: 12px;
     }
-    .data-lbl { color: var(--text-muted); }
-    .data-val { font-weight: 600; color: #fff; text-align: right; }
+    .info-lbl { color: var(--text-muted); }
+    .info-val { font-weight: 600; color: #fff; text-align: right; }
 
-    .maps-link {
+    /* External Action Buttons */
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-action {
       display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
       font-size: 0.75rem;
-      color: var(--accent);
-      text-decoration: none;
       font-weight: 600;
+      text-decoration: none;
+      background: #1f2b45;
+      color: var(--accent);
+      border: 1px solid var(--border);
     }
 
-    /* Sticky Bottom Dock */
+    /* Fixed Bottom Dock */
     .dock {
       position: fixed;
       bottom: 0; left: 0; right: 0;
@@ -183,19 +162,63 @@
     }
     .dock-status strong { display: block; font-size: 0.82rem; color: var(--accent); }
     .dock-status span { font-size: 0.75rem; color: var(--text-muted); }
+    .dock-actions { display: flex; gap: 8px; }
     .dock-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .dock-btn.primary {
       background: var(--accent);
+      border: none;
       color: #0b0f19;
       font-weight: 700;
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-size: 0.8rem;
       text-decoration: none;
     }
+
+    /* Driver Setup Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      max-width: 380px;
+      width: 100%;
+      padding: 18px;
+    }
+    .modal-box h3 { font-size: 0.95rem; margin-bottom: 12px; }
+    .modal-field { margin-bottom: 12px; }
+    .modal-field label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+    .modal-field input {
+      width: 100%;
+      padding: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.85rem;
+    }
+    .modal-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
   </style>
 </head>
 <body>
 
+  <!-- Sticky Top Context -->
   <header>
     <div class="badge-bar">
       <span class="badge">Day 05</span>
@@ -207,13 +230,13 @@
   </header>
 
   <main>
-    <!-- Map Frame -->
+    <!-- Google My Maps Embed -->
     <div class="map-frame">
       <div class="map-toolbar">
-        <span>Street & Path Cartography</span>
-        <span style="color:var(--teal)">Leaflet / CartoDB</span>
+        <span>Google My Maps</span>
+        <span style="color:var(--teal)">Live Interactive Map</span>
       </div>
-      <div id="map"></div>
+      <iframe src="https://www.google.com/maps/d/embed?mid=1hx8SGyigEuLLHEhGlK_WD2gFIsBd4iQ" loading="lazy"></iframe>
     </div>
 
     <!-- Logistics Directive -->
@@ -225,193 +248,112 @@
     <!-- Timeline Stepper -->
     <div class="timeline">
 
-      <!-- Step 1 -->
-      <article class="step-card active" id="card-step-1" onclick="focusWaypoint(0)">
+      <!-- Step 1: West Moat Bridge & Gopura -->
+      <article class="step-card">
         <div class="step-dot"></div>
-        <div class="step-img-box">
-          <svg viewBox="0 0 400 130" width="100%" height="100%">
-            <!-- Water -->
-            <rect x="0" y="80" width="400" height="50" fill="#1e293b"/>
-            <!-- Pontoon bridge -->
-            <rect x="20" y="85" width="220" height="12" fill="#475569" stroke="#64748b"/>
-            <line x1="20" y1="85" x2="240" y2="85" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 4"/>
-            <!-- Outer Gatehouse silhouette -->
-            <path d="M250,90 L250,55 L270,55 L280,30 L290,55 L310,55 L310,90 Z" fill="#334155" stroke="#94a3b8" stroke-width="1.5"/>
-            <rect x="273" y="65" width="14" height="25" fill="#0b0f19"/>
-            <text x="30" y="50" fill="#94a3b8" font-size="12" font-family="sans-serif">Floating Pontoon Bridge (Darkness)</text>
-          </svg>
-          <span class="img-tag">West Outer Gopura</span>
+        <div class="step-header">
+          <span class="step-clock">05:00 – 05:25</span>
+          <span class="step-num">Waypoint 1</span>
         </div>
-        <div class="step-content">
-          <div class="step-header">
-            <span class="step-clock">05:00 – 05:25</span>
-            <span class="step-num">Waypoint 1</span>
-          </div>
-          <h2 class="step-title">West Moat Pontoon & Outer Gopura</h2>
-          <p class="step-summary">Tuk-tuk drops you off at the main western moat perimeter. Cross the floating pontoon in pitch darkness using headlamps. Pass through the triple-gabled Western Gatehouse into the main courtyard.</p>
-          <div class="data-matrix">
-            <span class="data-lbl">Surface:</span>
-            <span class="data-val">Pontoon then sandstone</span>
-            <span class="data-lbl">Lighting:</span>
-            <span class="data-val">Pitch Black (Headlamps)</span>
-          </div>
-          <a class="maps-link" href="https://www.google.com/maps/search/?api=1&query=13.41246,103.85900" target="_blank" onclick="event.stopPropagation()">↗ Open West Moat in Google Maps</a>
+        <h2 class="step-title">West Moat Pontoon & Outer Gopura</h2>
+        <p class="step-desc">Tuk-tuk drop-off at West Gate. Cross the floating pontoon bridge in pitch darkness using headlamps. Pass through the Western Gatehouse (Gopura) into the outer courtyard.</p>
+        <div class="info-grid">
+          <span class="info-lbl">Surface:</span>
+          <span class="info-val">Pontoon to Sandstone</span>
+          <span class="info-lbl">Torch Requirement:</span>
+          <span class="info-val">Pitch Black (Headlamps on)</span>
+        </div>
+        <div class="btn-row">
+          <a class="btn-action" href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=13.41246,103.85900&heading=90&pitch=0" target="_blank">🌐 Street View (Facing East)</a>
+          <a class="btn-action" href="https://www.google.com/maps/search/?api=1&query=13.41246,103.85900" target="_blank">📍 Open in Maps</a>
         </div>
       </article>
 
-      <!-- Step 2 -->
-      <article class="step-card" id="card-step-2" onclick="focusWaypoint(1)">
+      <!-- Step 2: Northern Reflection Pool -->
+      <article class="step-card">
         <div class="step-dot"></div>
-        <div class="step-img-box">
-          <svg viewBox="0 0 400 130" width="100%" height="100%">
-            <!-- Sky Gradient Dawn -->
-            <defs>
-              <linearGradient id="dawnSky" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#4c1d95"/>
-                <stop offset="60%" stop-color="#b45309"/>
-                <stop offset="100%" stop-color="#1e1b4b"/>
-              </linearGradient>
-            </defs>
-            <rect x="0" y="0" width="400" height="75" fill="url(#dawnSky)"/>
-            <!-- 5 Towers Silhouette -->
-            <path d="M120,75 L140,45 L150,45 L155,25 L160,45 L170,45 L175,75 L180,55 L190,55 L195,15 L200,15 L205,55 L215,55 L220,75 L225,45 L235,45 L240,25 L245,45 L255,45 L275,75 Z" fill="#0b0f19"/>
-            <!-- Reflection Water -->
-            <rect x="0" y="75" width="400" height="55" fill="#0f172a"/>
-            <!-- Inverted Reflection -->
-            <path d="M120,75 L140,95 L150,95 L155,110 L160,95 L170,95 L175,75 L180,90 L190,90 L195,115 L200,115 L205,90 L215,90 L220,75 L225,95 L235,95 L240,110 L245,95 L255,95 L275,75 Z" fill="#1e293b" opacity="0.6"/>
-            <text x="290" y="40" fill="#fde68a" font-size="11" font-family="sans-serif">Sun Edge ~06:28</text>
-          </svg>
-          <span class="img-tag">Northern Reflection Pool</span>
+        <div class="step-header">
+          <span class="step-clock">05:25 – 06:15</span>
+          <span class="step-num">Waypoint 2</span>
         </div>
-        <div class="step-content">
-          <div class="step-header">
-            <span class="step-clock">05:25 – 06:15</span>
-            <span class="step-num">Waypoint 2</span>
-          </div>
-          <h2 class="step-title">Northern Reflection Pool (Dawn Station)</h2>
-          <p class="step-summary">Walk down the 350-metre raised sandstone causeway past the twin libraries. Secure a spot at the front perimeter of the Northern (Left) Pool to capture the 5-tower reflection before sunrise.</p>
-          <div class="data-matrix">
-            <span class="data-lbl">Civil Twilight:</span>
-            <span class="data-val">06:05 (First color)</span>
-            <span class="data-lbl">Tactic:</span>
-            <span class="data-val">Depart pool by 06:15</span>
-          </div>
-          <a class="maps-link" href="https://www.google.com/maps/search/?api=1&query=13.41315,103.86520" target="_blank" onclick="event.stopPropagation()">↗ Open Reflection Pool in Google Maps</a>
+        <h2 class="step-title">Northern Reflection Pool (Dawn Station)</h2>
+        <p class="step-desc">Walk down the 350-metre raised causeway past the twin libraries. Position on the front perimeter of the Northern (Left) Pool for the five-tower reflection as the sky lightens.</p>
+        <div class="info-grid">
+          <span class="info-lbl">Civil Twilight:</span>
+          <span class="info-val">06:05 (First color)</span>
+          <span class="info-lbl">Sun Behind Towers:</span>
+          <span class="info-val">~06:28</span>
+          <span class="info-lbl">Crowd Strategy:</span>
+          <span class="info-val">Leave pool by 06:15 sharp</span>
+          <span class="info-lbl">Camera Azimuth:</span>
+          <span class="info-val">90.3° (Due East)</span>
+        </div>
+        <div class="btn-row">
+          <a class="btn-action" href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=13.41249,103.86474&heading=90&pitch=8" target="_blank">🌐 Street View (Locked on Towers)</a>
+          <a class="btn-action" href="https://www.google.com/maps/search/?api=1&query=13.41249,103.86474" target="_blank">📍 Open in Maps</a>
         </div>
       </article>
 
-      <!-- Step 3 -->
-      <article class="step-card" id="card-step-3" onclick="focusWaypoint(2)">
+      <!-- Step 3: Central Bakan Sanctuary -->
+      <article class="step-card">
         <div class="step-dot"></div>
-        <div class="step-img-box">
-          <svg viewBox="0 0 400 130" width="100%" height="100%">
-            <rect x="0" y="0" width="400" height="130" fill="#0f172a"/>
-            <!-- Tiered Temple Base -->
-            <polygon points="40,120 120,40 280,40 360,120" fill="#1e293b" stroke="#334155" stroke-width="2"/>
-            <!-- Central Tower -->
-            <rect x="175" y="10" width="50" height="30" fill="#334155"/>
-            <!-- Steep Wooden Flight of Stairs -->
-            <polygon points="185,120 195,120 205,40 198,40" fill="#b45309" stroke="#f59e0b" stroke-width="1"/>
-            <line x1="187" y1="110" x2="197" y2="110" stroke="#fff" stroke-width="1"/>
-            <line x1="190" y1="95" x2="200" y2="95" stroke="#fff" stroke-width="1"/>
-            <line x1="193" y1="80" x2="203" y2="80" stroke="#fff" stroke-width="1"/>
-            <line x1="196" y1="65" x2="204" y2="65" stroke="#fff" stroke-width="1"/>
-            <line x1="198" y1="50" x2="205" y2="50" stroke="#fff" stroke-width="1"/>
-            <text x="220" y="85" fill="#f59e0b" font-size="11" font-family="sans-serif">70° Wooden Staircase</text>
-          </svg>
-          <span class="img-tag">Bakan Central Sanctuary</span>
+        <div class="step-header">
+          <span class="step-clock">06:20 – 07:15</span>
+          <span class="step-num">Waypoint 3</span>
         </div>
-        <div class="step-content">
-          <div class="step-header">
-            <span class="step-clock">06:20 – 07:15</span>
-            <span class="step-num">Waypoint 3</span>
-          </div>
-          <h2 class="step-title">Bakan Ascent (Central Sanctuary)</h2>
-          <p class="step-summary">Enter through the cruciform gallery into the inner courtyard while the majority remain at the pond. Ascend the wooden safety staircase on the eastern flank before the 100-person queue develops.</p>
-          <div class="data-matrix">
-            <span class="data-lbl">Dress Code:</span>
-            <span class="data-val">Cover shoulders & knees</span>
-            <span class="data-lbl">Stair Pitch:</span>
-            <span class="data-val">~70° steep with handrails</span>
-          </div>
-          <a class="maps-link" href="https://www.google.com/maps/search/?api=1&query=13.41248,103.86729" target="_blank" onclick="event.stopPropagation()">↗ Open Bakan in Google Maps</a>
+        <h2 class="step-title">Bakan Ascent (Central Uppermost Tier)</h2>
+        <p class="step-desc">Enter the central cloister while the crowd remains at the pond. Ascend the wooden safety staircase on the eastern side before the 100-person queue forms.</p>
+        <div class="info-grid">
+          <span class="info-lbl">Dress Code:</span>
+          <span class="info-val">Cover shoulders & knees (strict)</span>
+          <span class="info-lbl">Stair Pitch:</span>
+          <span class="info-val">~70° steep with handrails</span>
+        </div>
+        <div class="btn-row">
+          <a class="btn-action" href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=13.41248,103.86698&heading=90&pitch=15" target="_blank">🌐 Street View (Bakan Base)</a>
+          <a class="btn-action" href="https://www.google.com/maps/search/?api=1&query=13.41248,103.86698" target="_blank">📍 Open in Maps</a>
         </div>
       </article>
 
-      <!-- Step 4 -->
-      <article class="step-card" id="card-step-4" onclick="focusWaypoint(3)">
+      <!-- Step 4: East Gallery Bas-Reliefs -->
+      <article class="step-card">
         <div class="step-dot"></div>
-        <div class="step-img-box">
-          <svg viewBox="0 0 400 130" width="100%" height="100%">
-            <rect x="0" y="0" width="400" height="130" fill="#141c2e"/>
-            <!-- Gallery pillars -->
-            <rect x="10" y="15" width="16" height="100" fill="#334155"/>
-            <rect x="70" y="15" width="16" height="100" fill="#334155"/>
-            <rect x="130" y="15" width="16" height="100" fill="#334155"/>
-            <!-- Bas relief wall with carvings -->
-            <rect x="160" y="25" width="230" height="80" fill="#1e293b" stroke="#475569" stroke-width="1"/>
-            <!-- Ocean wave / Vasuki serpent line -->
-            <path d="M165,65 Q180,55 195,65 T225,65 T255,65 T285,65 T315,65 T345,65 T375,65" fill="none" stroke="#f59e0b" stroke-width="3"/>
-            <!-- Devas / Asuras figures -->
-            <circle cx="210" cy="50" r="4" fill="#94a3b8"/>
-            <circle cx="240" cy="50" r="4" fill="#94a3b8"/>
-            <circle cx="270" cy="50" r="4" fill="#94a3b8"/>
-            <circle cx="300" cy="50" r="4" fill="#94a3b8"/>
-            <circle cx="330" cy="50" r="4" fill="#94a3b8"/>
-            <text x="170" y="95" fill="#cbd5e1" font-size="10" font-family="sans-serif">Bas-Relief: 88 Devas & 92 Asuras</text>
-          </svg>
-          <span class="img-tag">East Gallery Wall</span>
+        <div class="step-header">
+          <span class="step-clock">07:15 – 07:45</span>
+          <span class="step-num">Waypoint 4</span>
         </div>
-        <div class="step-content">
-          <div class="step-header">
-            <span class="step-clock">07:15 – 07:45</span>
-            <span class="step-num">Waypoint 4</span>
-          </div>
-          <h2 class="step-title">East Gallery: Churning of the Ocean of Milk</h2>
-          <p class="step-summary">Descend from the summit into the 3rd enclosure's eastern gallery. Morning sunlight illuminates the 49-metre continuous carving showing devas and asuras pulling the serpent Vasuki.</p>
-          <div class="data-matrix">
-            <span class="data-lbl">Solar Angle:</span>
-            <span class="data-val">Direct low eastern illumination</span>
-            <span class="data-lbl">Length:</span>
-            <span class="data-val">49 metres continuous frieze</span>
-          </div>
-          <a class="maps-link" href="https://www.google.com/maps/search/?api=1&query=13.41205,103.86775" target="_blank" onclick="event.stopPropagation()">↗ Open East Gallery in Google Maps</a>
+        <h2 class="step-title">East Gallery: Churning of the Ocean of Milk</h2>
+        <p class="step-desc">Descend into the 3rd enclosure's eastern gallery. Early morning sunlight directly illuminates the 49-metre continuous frieze of devas and asuras pulling the serpent Vasuki.</p>
+        <div class="info-grid">
+          <span class="info-lbl">Solar Angle:</span>
+          <span class="info-val">Low eastern illumination</span>
+          <span class="info-lbl">Crowd Level:</span>
+          <span class="info-val">Quiet; tour groups still at front</span>
+        </div>
+        <div class="btn-row">
+          <a class="btn-action" href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=13.41205,103.86775&heading=270&pitch=0" target="_blank">🌐 Street View (Gallery Wall)</a>
+          <a class="btn-action" href="https://www.google.com/maps/search/?api=1&query=13.41205,103.86775" target="_blank">📍 Open in Maps</a>
         </div>
       </article>
 
-      <!-- Step 5 -->
-      <article class="step-card" id="card-step-5" onclick="focusWaypoint(4)">
+      <!-- Step 5: East Forest Exit -->
+      <article class="step-card">
         <div class="step-dot"></div>
-        <div class="step-img-box">
-          <svg viewBox="0 0 400 130" width="100%" height="100%">
-            <rect x="0" y="0" width="400" height="130" fill="#064e3b" opacity="0.4"/>
-            <!-- Trees along forest path -->
-            <path d="M40,110 Q50,40 60,110 Z" fill="#047857"/>
-            <path d="M100,115 Q115,30 130,115 Z" fill="#047857"/>
-            <path d="M280,115 Q295,35 310,115 Z" fill="#047857"/>
-            <path d="M340,110 Q350,40 360,110 Z" fill="#047857"/>
-            <!-- Earthen walkway -->
-            <polygon points="120,130 180,70 220,70 280,130" fill="#78350f" opacity="0.6"/>
-            <!-- East Gate archway in background -->
-            <rect x="185" y="50" width="30" height="25" fill="#334155"/>
-            <text x="145" y="40" fill="#34d399" font-size="11" font-family="sans-serif">Shaded Forest Path to East Gate</text>
-          </svg>
-          <span class="img-tag">East Gate Shaded Exit</span>
+        <div class="step-header">
+          <span class="step-clock">07:45 – 08:00</span>
+          <span class="step-num">Waypoint 5</span>
         </div>
-        <div class="step-content">
-          <div class="step-header">
-            <span class="step-clock">07:45 – 08:00</span>
-            <span class="step-num">Waypoint 5</span>
-          </div>
-          <h2 class="step-title">Traverse Exit via East Gopura</h2>
-          <p class="step-summary">Exit straight out through the rear door of the East Gallery. Walk along the shaded dirt causeway through the forest to meet your driver at the quiet East Gate access road.</p>
-          <div class="data-matrix">
-            <span class="data-lbl">Traverse Walk:</span>
-            <span class="data-val">~350m shaded path</span>
-            <span class="data-lbl">Rally Point:</span>
-            <span class="data-val">East Gate road loop</span>
-          </div>
-          <a class="maps-link" href="https://www.google.com/maps/search/?api=1&query=13.41247,103.87320" target="_blank" onclick="event.stopPropagation()">↗ Open East Gate in Google Maps</a>
+        <h2 class="step-title">Traverse Exit via East Gopura</h2>
+        <p class="step-desc">Pass through the rear doors of the East Gallery. Walk along the shaded dirt causeway through the forest to meet your driver at the quiet East Gate access road.</p>
+        <div class="info-grid">
+          <span class="info-lbl">Traverse Distance:</span>
+          <span class="info-val">~350m shaded walk</span>
+          <span class="info-lbl">Pick-up Location:</span>
+          <span class="info-val">East Gate access road</span>
+        </div>
+        <div class="btn-row">
+          <a class="btn-action" href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=13.41247,103.87320&heading=90&pitch=0" target="_blank">🌐 Street View (East Gate)</a>
+          <a class="btn-action" href="https://www.google.com/maps/search/?api=1&query=13.41247,103.87320" target="_blank">📍 Open in Maps</a>
         </div>
       </article>
 
@@ -422,81 +364,69 @@
   <div class="dock">
     <div class="dock-status">
       <strong>Rally @ East Gate: 08:00</strong>
-      <span>Do not backtrack to West Gate</span>
+      <span id="dock-driver-label">Driver: Not Set</span>
     </div>
-    <a class="dock-btn" href="https://www.google.com/maps/search/?api=1&query=13.41247,103.87320" target="_blank">📍 East Gate Map</a>
+    <div class="dock-actions">
+      <button class="dock-btn" onclick="openDriverModal()">⚙ Driver</button>
+      <a class="dock-btn primary" id="dock-call-btn" href="tel:">📞 Call</a>
+    </div>
   </div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Local Driver Modal -->
+  <div class="modal" id="driver-modal" onclick="closeDriverModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <h3>Trip Driver Setup</h3>
+      <div class="modal-field">
+        <label for="driver-name">Driver Name / Vehicle</label>
+        <input type="text" id="driver-name" placeholder="e.g. Mr. Dara (Tuk-Tuk 12)">
+      </div>
+      <div class="modal-field">
+        <label for="driver-phone">Phone Number</label>
+        <input type="tel" id="driver-phone" placeholder="e.g. +855 12 345 678">
+      </div>
+      <div class="modal-btns">
+        <button class="dock-btn" onclick="closeDriverModal()">Cancel</button>
+        <button class="dock-btn primary" onclick="saveDriverInfo()">Save</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Precise physical coordinates along Angkor Wat central axis
-    const waypoints = [
-      { id: 1, title: "West Pontoon & Moat", coords: [13.41246, 103.85900], zoom: 17 },
-      { id: 2, title: "Northern Reflection Pool", coords: [13.41315, 103.86520], zoom: 18 },
-      { id: 3, title: "Bakan Central Stairs", coords: [13.41248, 103.86729], zoom: 18 },
-      { id: 4, title: "East Bas-Relief Gallery", coords: [13.41205, 103.86775], zoom: 18 },
-      { id: 5, title: "East Gate Pickup Loop", coords: [13.41247, 103.87320], zoom: 17 }
-    ];
-
-    // Initialize Map with CartoDB Voyager tiles (High-contrast StreetMap, no 403 desktop blocks)
-    const map = L.map('map', {
-      center: [13.41247, 103.8660],
-      zoom: 15,
-      zoomControl: true
-    });
-
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
-      subdomains: 'abcd',
-      attribution: '&copy; OpenStreetMap &copy; CARTO'
-    }).addTo(map);
-
-    // Draw Traverse Walking Path
-    const routeCoords = waypoints.map(w => w.coords);
-    L.polyline(routeCoords, {
-      color: '#f59e0b',
-      weight: 3.5,
-      dashArray: '6, 8',
-      opacity: 0.95
-    }).addTo(map);
-
-    // Add Numbered Markers
-    const markers = [];
-    waypoints.forEach((wp, index) => {
-      const icon = L.divIcon({
-        className: 'custom-pin',
-        html: `<div style="background:#ef4444; color:#fff; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:11px; border:2px solid #fff; box-shadow:0 2px 5px rgba(0,0,0,0.6);">${wp.id}</div>`,
-        iconSize: [22, 22],
-        iconAnchor: [11, 11]
-      });
-
-      const marker = L.marker(wp.coords, { icon: icon }).addTo(map);
-      marker.bindPopup(`<strong>${wp.id}. ${wp.title}</strong>`);
-      marker.on('click', () => highlightCard(index + 1));
-      markers.push(marker);
-    });
-
-    function focusWaypoint(index) {
-      const wp = waypoints[index];
-      map.flyTo(wp.coords, wp.zoom, { duration: 0.8 });
-      markers[index].openPopup();
-      highlightCard(wp.id);
-    }
-
-    function highlightCard(id) {
-      document.querySelectorAll('.step-card').forEach(card => card.classList.remove('active'));
-      const activeCard = document.getElementById(`card-step-${id}`);
-      if (activeCard) {
-        activeCard.classList.add('active');
-        activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    function loadDriver() {
+      const name = localStorage.getItem('trip_driver_name') || 'Not Set';
+      const phone = localStorage.getItem('trip_driver_phone') || '';
+      document.getElementById('dock-driver-label').textContent = `Driver: ${name}`;
+      const btn = document.getElementById('dock-call-btn');
+      if (phone) {
+        btn.href = `tel:${phone}`;
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+      } else {
+        btn.href = '#';
+        btn.style.opacity = '0.4';
       }
     }
 
-    // Force map recalculation on desktop and mobile load
-    window.addEventListener('load', () => {
-      setTimeout(() => { map.invalidateSize(); }, 300);
-    });
+    function openDriverModal() {
+      document.getElementById('driver-name').value = localStorage.getItem('trip_driver_name') || '';
+      document.getElementById('driver-phone').value = localStorage.getItem('trip_driver_phone') || '';
+      document.getElementById('driver-modal').style.display = 'flex';
+    }
+
+    function closeDriverModal(e) {
+      document.getElementById('driver-modal').style.display = 'none';
+    }
+
+    function saveDriverInfo() {
+      const name = document.getElementById('driver-name').value.trim();
+      const phone = document.getElementById('driver-phone').value.trim();
+      localStorage.setItem('trip_driver_name', name || 'Driver');
+      localStorage.setItem('trip_driver_phone', phone);
+      loadDriver();
+      closeDriverModal();
+    }
+
+    window.addEventListener('DOMContentLoaded', loadDriver);
   </script>
 </body>
 </html>
