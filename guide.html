@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Expedition Guide | 2027</title>
+
+  <!-- Lightweight Markdown Parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #141c2e;
+      --border: #23304d;
+      --accent: #f59e0b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --teal: #14b8a6;
+      --danger: #ef4444;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.5;
+      padding-bottom: 80px;
+    }
+
+    /* Sticky Navigation Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(20, 28, 46, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+    }
+    .header-badges { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      background: #1f2b45;
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+    h1 { font-size: 1.2rem; font-weight: 700; }
+
+    main { max-width: 680px; margin: 0 auto; padding: 16px; }
+
+    /* Top-level Section Header (When Detail, Image, URL are blank) */
+    .section-heading {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #fff;
+      margin: 28px 0 12px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-heading:first-of-type { margin-top: 4px; }
+
+    /* Content Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .card-body { padding: 14px; }
+
+    .card-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .meta-time {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #fbbf24;
+      background: #3b2a0c;
+      border: 1px solid #78350f;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .meta-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--teal);
+      background: rgba(20, 184, 166, 0.12);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    /* Detail / Markdown Content */
+    .card-detail {
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+    }
+    .card-detail p { margin-bottom: 8px; }
+    .card-detail p:last-child { margin-bottom: 0; }
+    .card-detail ul, .card-detail ol { margin-left: 20px; margin-bottom: 8px; }
+    .card-detail li { margin-bottom: 4px; }
+    .card-detail strong { color: #fff; }
+    .card-detail blockquote {
+      border-left: 3px solid var(--accent);
+      background: rgba(245, 158, 11, 0.08);
+      padding: 6px 10px;
+      border-radius: 0 4px 4px 0;
+      margin: 8px 0;
+      font-size: 0.82rem;
+    }
+
+    /* Card Image */
+    .card-media {
+      width: 100%;
+      max-height: 280px;
+      overflow: hidden;
+      margin: 10px 0;
+      border-radius: 6px;
+      background: #0b0f19;
+      border: 1px solid var(--border);
+    }
+    .card-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Action Buttons (GPS & Website) */
+    .action-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-decoration: none;
+      background: #1f2b45;
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+    .btn:hover { background: #263555; }
+
+    /* Map & Frame Embeds */
+    .embed-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+    .embed-bar {
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #1b263e;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .embed-card iframe {
+      display: block;
+      width: 100%;
+      border: none;
+    }
+    .embed-card.map iframe { height: 360px; }
+    .embed-card.standard iframe { height: 500px; }
+    .embed-footer {
+      padding: 8px 12px;
+      background: #101625;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* Loading / Error States */
+    .state-msg {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-badges">
+      <span class="badge" id="guide-badge">Guide</span>
+      <span class="badge" style="color:var(--teal)">2027</span>
+    </div>
+    <h1 id="guide-title">Loading Itinerary...</h1>
+  </header>
+
+  <main id="content-container">
+    <div class="state-msg">Loading data from Google Sheets...</div>
+  </main>
+
+  <script>
+    // Configured Google Sheets CSV endpoint
+    const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSas-A05UmzHIUQF9XcuRXmx05dFgilJTSuvc2vRL_SgFSQ8KWqsRP5cJlLhSbelbZ3daHlwnn5yalf/pub?gid=0&single=true&output=csv';
+
+    // CSV parser accounting for quotes, commas, and newlines
+    function parseCSV(text) {
+      const p = '', row = [''], ret = [row];
+      let i = 0, r = 0, s = !0, l;
+      for (let l of text) {
+        if ('"' === l) {
+          if (s && l === p) row[i] += l;
+          s = !s;
+        } else if (',' === l && s) l = row[++i] = '';
+        else if ('\n' === l && s) {
+          if ('\r' === p) row[i] = row[i].slice(0, -1);
+          row = [l = ''];
+          ret[++r] = row;
+          i = 0;
+        } else row[i] += l;
+        p = l;
+      }
+      return ret;
+    }
+
+    async function loadGuide() {
+      const container = document.getElementById('content-container');
+      const params = new URLSearchParams(window.location.search);
+      const activeGuideName = params.get('guide') || 'AngkerWat';
+
+      document.getElementById('guide-title').textContent = activeGuideName;
+
+      try {
+        const response = await fetch(SHEET_CSV_URL);
+        const csvText = await response.text();
+        const rows = parseCSV(csvText);
+
+        if (rows.length < 2) {
+          container.innerHTML = '<div class="state-msg">No data rows found in the sheet.</div>';
+          return;
+        }
+
+        // Map header row to indices
+        const headers = rows[0].map(h => h.trim().toLowerCase());
+        const getIdx = (name) => headers.indexOf(name.toLowerCase());
+
+        const idxName = getIdx('Name');
+        const idxSeq = getIdx('Sequence');
+        const idxBadge = getIdx('Badge');
+        const idxTime = getIdx('Time');
+        const idxTitle = getIdx('Title');
+        const idxDetail = getIdx('Detail');
+        const idxImage = getIdx('Image');
+        const idxMapCoords = getIdx('MapCoords');
+        const idxURL = getIdx('URL');
+
+        // Filter for active guide and sort by Sequence ASC
+        const guideRows = rows.slice(1)
+          .map(r => ({
+            name: (r[idxName] || '').trim(),
+            sequence: parseFloat((r[idxSeq] || '').trim()) || 9999,
+            badge: (r[idxBadge] || '').trim(),
+            time: (r[idxTime] || '').trim(),
+            title: (r[idxTitle] || '').trim(),
+            detail: (r[idxDetail] || '').trim(),
+            image: (r[idxImage] || '').trim(),
+            mapCoords: (r[idxMapCoords] || '').trim(),
+            url: (r[idxURL] || '').trim()
+          }))
+          .filter(r => r.name.toLowerCase() === activeGuideName.toLowerCase())
+          .sort((a, b) => a.sequence - b.sequence);
+
+        if (guideRows.length === 0) {
+          container.innerHTML = `<div class="state-msg">No entries found matching guide: <strong>${activeGuideName}</strong></div>`;
+          return;
+        }
+
+        container.innerHTML = '';
+
+        // Render rows
+        guideRows.forEach(item => {
+          const isDetailEmpty = !item.detail;
+          const isImageEmpty = !item.image;
+          const isUrlEmpty = !item.url;
+
+          // Rule 1: Section Title (Detail, Image, and URL are all empty)
+          if (isDetailEmpty && isImageEmpty && isUrlEmpty) {
+            const h2 = document.createElement('h2');
+            h2.className = 'section-heading';
+            h2.textContent = item.title;
+            container.appendChild(h2);
+            return;
+          }
+
+          // Rule 2: Standalone URL Embed (Detail & Image are empty, but URL exists)
+          if (isDetailEmpty && isImageEmpty && !isUrlEmpty) {
+            const isMyMap = item.url.includes('google.com/maps/d/');
+            const embedDiv = document.createElement('div');
+            embedDiv.className = `embed-card ${isMyMap ? 'map' : 'standard'}`;
+
+            let iframeSrc = item.url;
+            if (isMyMap) {
+              iframeSrc = item.url.replace(/\/edit(\?.*)?$/, '/embed$1').replace(/\/viewer(\?.*)?$/, '/embed$1');
+              if (!iframeSrc.includes('/embed')) {
+                iframeSrc = iframeSrc.split('?')[0] + '/embed?' + (iframeSrc.split('?')[1] || '');
+              }
+            }
+
+            embedDiv.innerHTML = `
+              <div class="embed-bar">
+                <span>${item.title || (isMyMap ? 'Interactive Map' : 'Embedded View')}</span>
+                <span style="color:var(--teal)">${isMyMap ? 'Google My Maps' : 'Web View'}</span>
+              </div>
+              <iframe src="${iframeSrc}" loading="lazy"></iframe>
+              ${isMyMap ? `
+                <div class="embed-footer">
+                  <a class="btn" href="${item.url}" target="_blank">↗ Open in Google Maps</a>
+                </div>
+              ` : ''}
+            `;
+            container.appendChild(embedDiv);
+            return;
+          }
+
+          // Rule 3: Content Card
+          const card = document.createElement('article');
+          card.className = 'card';
+
+          let html = '<div class="card-body">';
+
+          // Badge & Time Pills
+          if (item.badge || item.time) {
+            html += '<div class="card-meta">';
+            if (item.time) html += `<span class="meta-time">${item.time}</span>`;
+            if (item.badge) html += `<span class="meta-badge">${item.badge}</span>`;
+            html += '</div>';
+          }
+
+          // Card Subtitle
+          if (item.title) {
+            html += `<h3 class="card-title">${item.title}</h3>`;
+          }
+
+          // Markdown Detail
+          if (item.detail) {
+            html += `<div class="card-detail">${marked.parse(item.detail)}</div>`;
+          }
+
+          // Local Image from ./images/ folder
+          if (item.image) {
+            html += `
+              <div class="card-media">
+                <img src="./images/${item.image}" alt="${item.title || 'Guide illustration'}" loading="lazy" onerror="this.parentElement.style.display='none';">
+              </div>
+            `;
+          }
+
+          // Action Row (GPS button and Website button)
+          const hasCoords = Boolean(item.mapCoords);
+          const hasUrl = Boolean(item.url);
+
+          if (hasCoords || hasUrl) {
+            html += '<div class="action-row">';
+            if (hasCoords) {
+              html += `<a class="btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.mapCoords)}" target="_blank">📍 Open in Maps</a>`;
+            }
+            if (hasUrl) {
+              html += `<a class="btn" href="${item.url}" target="_blank">🌐 Web Site</a>`;
+            }
+            html += '</div>';
+          }
+
+          html += '</div>';
+          card.innerHTML = html;
+          container.appendChild(card);
+        });
+
+      } catch (err) {
+        container.innerHTML = `<div class="state-msg" style="color:var(--danger)">Error loading guide: ${err.message}</div>`;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadGuide);
+  </script>
+</body>
+</html>
