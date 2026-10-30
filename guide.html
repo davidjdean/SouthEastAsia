@@ -234,21 +234,24 @@
     // Configured Google Sheets CSV endpoint
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSas-A05UmzHIUQF9XcuRXmx05dFgilJTSuvc2vRL_SgFSQ8KWqsRP5cJlLhSbelbZ3daHlwnn5yalf/pub?gid=0&single=true&output=csv';
 
-    // CSV parser accounting for quotes, commas, and newlines
+    // RFC-compliant CSV parser handling quoted multiline cells
     function parseCSV(text) {
-      const p = '', row = [''], ret = [row];
-      let i = 0, r = 0, s = !0, l;
+      let p = '', row = [''], ret = [row];
+      let i = 0, r = 0, s = true;
       for (let l of text) {
         if ('"' === l) {
           if (s && l === p) row[i] += l;
           s = !s;
-        } else if (',' === l && s) l = row[++i] = '';
-        else if ('\n' === l && s) {
+        } else if (',' === l && s) {
+          row[++i] = '';
+        } else if ('\n' === l && s) {
           if ('\r' === p) row[i] = row[i].slice(0, -1);
-          row = [l = ''];
+          row = [''];
           ret[++r] = row;
           i = 0;
-        } else row[i] += l;
+        } else {
+          row[i] += l;
+        }
         p = l;
       }
       return ret;
@@ -257,7 +260,7 @@
     async function loadGuide() {
       const container = document.getElementById('content-container');
       const params = new URLSearchParams(window.location.search);
-      const activeGuideName = params.get('guide') || 'AngkerWat';
+      const activeGuideName = params.get('guide') || 'AngkorWat';
 
       document.getElementById('guide-title').textContent = activeGuideName;
 
@@ -275,15 +278,15 @@
         const headers = rows[0].map(h => h.trim().toLowerCase());
         const getIdx = (name) => headers.indexOf(name.toLowerCase());
 
-        const idxName = getIdx('Name');
-        const idxSeq = getIdx('Sequence');
-        const idxBadge = getIdx('Badge');
-        const idxTime = getIdx('Time');
-        const idxTitle = getIdx('Title');
-        const idxDetail = getIdx('Detail');
-        const idxImage = getIdx('Image');
-        const idxMapCoords = getIdx('MapCoords');
-        const idxURL = getIdx('URL');
+        const idxName = getIdx('name');
+        const idxSeq = getIdx('sequence');
+        const idxBadge = getIdx('badge');
+        const idxTime = getIdx('time');
+        const idxTitle = getIdx('title');
+        const idxDetail = getIdx('detail');
+        const idxImage = getIdx('image');
+        const idxMapCoords = getIdx('mapcoords');
+        const idxURL = getIdx('url');
 
         // Filter for active guide and sort by Sequence ASC
         const guideRows = rows.slice(1)
