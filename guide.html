@@ -18,6 +18,8 @@
       --text-muted: #94a3b8;
       --teal: #14b8a6;
       --danger: #ef4444;
+      --pin-blue: #1e3a8a;
+      --pin-border: #3b82f6;
       --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
@@ -30,7 +32,7 @@
       padding-bottom: 80px;
     }
 
-    /* Sticky Navigation Header */
+    /* Sticky Navigation Header - Clean (Badges removed) */
     header {
       position: sticky;
       top: 0;
@@ -38,24 +40,18 @@
       background: rgba(20, 28, 46, 0.95);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
-      padding: 12px 16px;
+      padding: 14px 16px;
     }
-    .header-badges { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
-    .badge {
-      font-size: 0.7rem;
+    h1 {
+      font-size: 1.15rem;
       font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      background: #1f2b45;
-      color: var(--accent);
-      border: 1px solid var(--border);
+      line-height: 1.3;
+      color: #fff;
     }
-    h1 { font-size: 1.2rem; font-weight: 700; }
 
     main { max-width: 680px; margin: 0 auto; padding: 16px; }
 
-    /* Top-level Section Header (When Detail, Image, URL are blank) */
+    /* Top-level Section Header */
     .section-heading {
       font-size: 1.15rem;
       font-weight: 800;
@@ -83,7 +79,7 @@
       display: flex;
       gap: 8px;
       align-items: center;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       flex-wrap: wrap;
     }
     .meta-time {
@@ -104,11 +100,32 @@
       border-radius: 4px;
     }
 
+    /* Card Title with Pin Number Badge */
     .card-title {
       font-size: 1.05rem;
       font-weight: 700;
       margin-bottom: 8px;
       color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pin-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
+      padding: 0 4px;
+      border-radius: 50%;
+      background: var(--pin-blue);
+      border: 2px solid var(--pin-border);
+      color: #ffffff;
+      font-size: 0.85rem;
+      font-weight: 800;
+      line-height: 1;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
     }
 
     /* Detail / Markdown Content */
@@ -235,10 +252,6 @@
 <body>
 
   <header>
-    <div class="header-badges">
-      <span class="badge" id="guide-badge">Guide</span>
-      <span class="badge" style="color:var(--teal)">2027</span>
-    </div>
     <h1 id="guide-title">Loading Itinerary...</h1>
   </header>
 
@@ -349,8 +362,6 @@
       const params = new URLSearchParams(window.location.search);
       const activeGuideName = params.get('guide') || 'AngkorWat';
 
-      document.getElementById('guide-title').textContent = activeGuideName;
-
       try {
         const response = await fetch(SHEET_CSV_URL);
         const csvText = await response.text();
@@ -392,19 +403,32 @@
           .sort((a, b) => a.sequence - b.sequence);
 
         if (guideRows.length === 0) {
+          document.getElementById('guide-title').textContent = activeGuideName;
           container.innerHTML = `<div class="state-msg">No entries found matching guide: <strong>${activeGuideName}</strong></div>`;
           return;
         }
 
+        // Option A: Extract human-readable Title from Sequence 10 (or fallback to activeGuideName)
+        const titleRow = guideRows.find(r => r.sequence === 10);
+        const displayTitle = (titleRow && titleRow.title) ? titleRow.title : activeGuideName;
+        document.getElementById('guide-title').textContent = displayTitle;
+
         container.innerHTML = '';
+
+        let stopCounter = 0;
 
         // Render rows
         guideRows.forEach(item => {
+          // Sequence 10 is our Title row, now in header
+          if (item.sequence === 10) {
+            return;
+          }
+
           const isDetailEmpty = !item.detail;
           const isImageEmpty = !item.image;
           const isUrlEmpty = !item.url;
 
-          // Rule 1: Section Title (Detail, Image, and URL are all empty)
+          // Rule 1: Section Title (For any other section breaks where Detail, Image, URL are empty)
           if (isDetailEmpty && isImageEmpty && isUrlEmpty) {
             const h2 = document.createElement('h2');
             h2.className = 'section-heading';
@@ -413,7 +437,7 @@
             return;
           }
 
-          // Rule 2: Standalone URL Embed (Detail & Image are empty, but URL exists)
+          // Rule 2: Standalone URL Embed (Detail & Image empty, but URL exists)
           if (isDetailEmpty && isImageEmpty && !isUrlEmpty) {
             const isMyMap = item.url.includes('google.com/maps/d/');
             const embedDiv = document.createElement('div');
@@ -457,9 +481,16 @@
             html += '</div>';
           }
 
-          // Card Title
+          // Determine if this is an actual geographic stop (Sequence >= 20)
+          let pinBadgeHtml = '';
+          if (item.sequence >= 20) {
+            stopCounter++;
+            pinBadgeHtml = `<span class="pin-badge" title="Map Pin ${stopCounter}">${stopCounter}</span>`;
+          }
+
+          // Card Title (with matching map pin number)
           if (item.title) {
-            html += `<h3 class="card-title">${item.title}</h3>`;
+            html += `<h3 class="card-title">${pinBadgeHtml}<span>${item.title}</span></h3>`;
           }
 
           // Markdown Detail
@@ -502,7 +533,7 @@
           // Attach text-to-speech listener to button
           if (hasSpokenContent) {
             const listenBtn = card.querySelector('.btn-listen');
-            const narrationScript = `${item.title ? item.title + '. ' : ''}${item.detail || ''}`;
+            const narrationScript = `${item.sequence >= 20 ? 'Stop ' + stopCounter + ': ' : ''}${item.title ? item.title + '. ' : ''}${item.detail || ''}`;
             listenBtn.addEventListener('click', () => toggleSpeech(narrationScript, listenBtn));
           }
 
