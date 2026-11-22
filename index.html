@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>SEA 2027 • Field Companion</title>
+  <style>
+    :root {
+      --bg-base: #0b1120;
+      --bg-surface: #131c31;
+      --bg-surface-elevated: #1b2640;
+      --bg-pill: #1e293b;
+      --border-subtle: rgba(148, 163, 184, 0.14);
+      --border-strong: rgba(148, 163, 184, 0.28);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+
+      /* Category Accent Colors */
+      --cat-transport: #38bdf8;
+      --cat-stay: #a78bfa;
+      --cat-activity: #34d399;
+      --cat-dining: #fb923c;
+      --cat-admin: #f43f5e;
+
+      /* Status Colors */
+      --status-confirmed-bg: rgba(16, 185, 129, 0.14);
+      --status-confirmed-fg: #34d399;
+      --status-deposit-bg: rgba(245, 158, 11, 0.16);
+      --status-deposit-fg: #fbbf24;
+      --status-tobook-bg: rgba(244, 63, 94, 0.16);
+      --status-tobook-fg: #fb7185;
+      --status-neutral-bg: rgba(148, 163, 184, 0.14);
+      --status-neutral-fg: #cbd5e1;
+
+      --accent-primary: #2dd4bf;
+      --accent-primary-dark: #0d9488;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.45;
+      padding-bottom: calc(32px + var(--safe-bottom));
+      overscroll-behavior-y: contain;
+    }
+
+    /* --- TOP HEADER & SYNC BAR --- */
+    .top-bar {
+      background: rgba(11, 17, 32, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: calc(12px + var(--safe-top)) 16px 10px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+    }
+    .sync-dot.offline { background: #f59e0b; }
+    .sync-dot.error { background: #f43f5e; }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      height: 36px;
+      padding: 0 11px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .icon-btn:active { transform: scale(0.96); }
+    .icon-btn.active {
+      background: rgba(45, 212, 191, 0.15);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .spin {
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* --- SIMULATOR PANEL --- */
+    .sim-drawer {
+      background: #172036;
+      border-bottom: 1px solid var(--border-strong);
+      padding: 12px 16px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .sim-drawer.open { display: flex; }
+    .sim-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .sim-row input {
+      background: var(--bg-base);
+      border: 1px solid var(--border-strong);
+      color: var(--text-primary);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      color-scheme: dark;
+    }
+
+    /* --- STICKY NAVIGATION CLUSTER --- */
+    .sticky-nav {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(11, 17, 32, 0.95);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    /* Day Strip */
+    .day-strip-wrapper {
+      display: flex;
+      align-items: center;
+      padding: 8px 8px 6px;
+      gap: 4px;
+    }
+
+    .nav-arrow {
+      flex-shrink: 0;
+      width: 32px;
+      height: 46px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .nav-arrow:disabled { opacity: 0.3; cursor: default; }
+
+    .day-strip {
+      display: flex;
+      overflow-x: auto;
+      gap: 6px;
+      padding: 2px 4px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      scroll-behavior: smooth;
+      flex: 1;
+    }
+    .day-strip::-webkit-scrollbar { display: none; }
+
+    .day-pill {
+      flex-shrink: 0;
+      min-width: 64px;
+      padding: 6px 10px;
+      border-radius: 11px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .day-pill .dp-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .day-pill .dp-date {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 1px;
+    }
+    .day-pill.today-marker::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-primary);
+    }
+    .day-pill.active {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+    }
+    .day-pill.active .dp-num,
+    .day-pill.active .dp-date {
+      color: #042f2e;
+    }
+    .day-pill.active.today-marker::after {
+      background: #042f2e;
+    }
+
+    /* Sticky Day Banner */
+    .day-banner {
+      padding: 8px 16px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .day-banner-left {
+      display: flex;
+      flex-direction: column;
+    }
+    .day-heading {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .day-hub {
+      font-size: 13px;
+      color: var(--accent-primary);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 1px;
+    }
+    .today-jump-btn {
+      background: rgba(45, 212, 191, 0.14);
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      color: var(--accent-primary);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* --- FILTER BAR --- */
+    .filter-bar {
+      padding: 10px 16px 6px;
+      display: flex;
+      overflow-x: auto;
+      gap: 7px;
+      scrollbar-width: none;
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+
+    .filter-chip {
+      flex-shrink: 0;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .filter-chip.active {
+      background: var(--text-primary);
+      color: var(--bg-base);
+      border-color: var(--text-primary);
+    }
+    .filter-chip.action-chip.active {
+      background: var(--status-deposit-bg);
+      color: var(--status-deposit-fg);
+      border-color: var(--status-deposit-fg);
+    }
+
+    /* --- MAIN TIMELINE CONTAINER --- */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 10px 16px 24px;
+    }
+
+    .cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* --- EVENT CARD --- */
+    .event-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    /* Left Category Accent Bar */
+    .event-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--cat-color, var(--text-muted));
+    }
+
+    .event-card[data-category="Transport"] { --cat-color: var(--cat-transport); }
+    .event-card[data-category="Stay"] { --cat-color: var(--cat-stay); }
+    .event-card[data-category="Activity"] { --cat-color: var(--cat-activity); }
+    .event-card[data-category="Dining & Lounge"] { --cat-color: var(--cat-dining); }
+    .event-card[data-category="Admin & Border"] { --cat-color: var(--cat-admin); }
+
+    .event-card.is-up-next {
+      border-color: rgba(45, 212, 191, 0.55);
+      box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.2), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .up-next-ribbon {
+      background: linear-gradient(90deg, rgba(45, 212, 191, 0.22), rgba(45, 212, 191, 0.04));
+      color: var(--accent-primary);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 4px 14px 4px 16px;
+      border-bottom: 1px solid rgba(45, 212, 191, 0.18);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-header {
+      padding: 13px 14px 13px 16px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .card-top-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .time-badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+
+    .cat-pill {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--cat-color);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 2px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.01em;
+    }
+
+    .card-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .chevron {
+      color: var(--text-muted);
+      font-size: 12px;
+      transition: transform 0.2s ease;
+      padding-top: 3px;
+      flex-shrink: 0;
+    }
+    .event-card.expanded .chevron {
+      transform: rotate(180deg);
+      color: var(--text-primary);
+    }
+
+    .card-location {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .card-summary {
+      font-size: 13.5px;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+
+    .card-footer-pills {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .status-Confirmed { background: var(--status-confirmed-bg); color: var(--status-confirmed-fg); }
+    .status-DepositPaid { background: var(--status-deposit-bg); color: var(--status-deposit-fg); }
+    .status-ToBook { background: var(--status-tobook-bg); color: var(--status-tobook-fg); }
+    .status-Neutral { background: var(--status-neutral-bg); color: var(--status-neutral-fg); }
+
+    .ref-pill {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      padding: 2px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .ref-pill:active {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .guide-mini-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-primary);
+      background: rgba(45, 212, 191, 0.12);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    /* --- EXPANDABLE DETAIL DRAWER --- */
+    .card-drawer {
+      display: none;
+      padding: 0 14px 15px 16px;
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(11, 17, 32, 0.35);
+      flex-direction: column;
+      gap: 12px;
+    }
+    .event-card.expanded .card-drawer {
+      display: flex;
+      padding-top: 12px;
+    }
+
+    .detail-text {
+      font-size: 13.5px;
+      color: #e2e8f0;
+      white-space: pre-line;
+      line-height: 1.55;
+    }
+
+    .financial-callout {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.32);
+      border-radius: var(--radius-sm);
+      padding: 9px 11px;
+      font-size: 12.5px;
+      color: #fde68a;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .financial-callout strong {
+      color: #fbbf24;
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 1px;
+    }
+
+    .drawer-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .action-btn {
+      flex: 1 1 auto;
+      min-height: 40px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      border: 1px solid var(--border-strong);
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      transition: transform 0.1s ease, background 0.15s ease;
+    }
+    .action-btn:active { transform: scale(0.98); }
+
+    .action-btn.btn-guide {
+      flex: 1 1 100%;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      border-color: #2dd4bf;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+    }
+
+    .action-btn.btn-map {
+      background: rgba(56, 189, 248, 0.14);
+      border-color: rgba(56, 189, 248, 0.38);
+      color: #7dd3fc;
+    }
+
+    /* --- STATES & TOAST --- */
+    .state-box {
+      text-align: center;
+      padding: 48px 20px;
+      background: var(--bg-surface);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-lg);
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    .state-box h3 {
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      font-size: 16px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: calc(20px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid var(--accent-primary);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.22s ease;
+      z-index: 100;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP APP BAR -->
+  <header class="top-bar">
+    <div class="brand">
+      <div class="brand-title">
+        <span>🌏 SEA 2027</span>
+        <span style="font-size:11px; font-weight:600; color:var(--text-secondary); background:var(--bg-surface); padding:2px 6px; border-radius:6px;">4 Adults</span>
+      </div>
+      <div class="brand-sub">
+        <span id="syncDot" class="sync-dot"></span>
+        <span id="syncStatus">Syncing itinerary...</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button id="simToggleBtn" class="icon-btn" title="Simulate Trip Date/Time">
+        <span>🧪</span><span>Test Date</span>
+      </button>
+      <button id="refreshBtn" class="icon-btn" title="Force Sync from Google Sheets">
+        <span id="refreshIcon">↻</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- PRE-TRIP DATE/TIME SIMULATOR -->
+  <section id="simDrawer" class="sim-drawer">
+    <div class="sim-row">
+      <strong>Pre-Trip Simulator:</strong>
+      <span>Test "Today" & "Up Next" highlighting</span>
+    </div>
+    <div class="sim-row">
+      <input type="date" id="simDateInput" min="2027-02-06" max="2027-03-02" value="2027-02-09" />
+      <input type="time" id="simTimeInput" value="08:15" />
+      <button id="applySimBtn" class="icon-btn active">Apply</button>
+      <button id="clearSimBtn" class="icon-btn">Reset to Real Clock</button>
+    </div>
+  </section>
+
+  <!-- STICKY DAY NAVIGATION & BANNER -->
+  <nav class="sticky-nav">
+    <div class="day-strip-wrapper">
+      <button id="prevDayBtn" class="nav-arrow" aria-label="Previous Day">‹</button>
+      <div id="dayStrip" class="day-strip" role="tablist"></div>
+      <button id="nextDayBtn" class="nav-arrow" aria-label="Next Day">›</button>
+    </div>
+
+    <div class="day-banner">
+      <div class="day-banner-left">
+        <div id="dayHeading" class="day-heading">Day 1 • Loading...</div>
+        <div id="dayHub" class="day-hub">Checking route...</div>
+      </div>
+      <button id="jumpTodayBtn" class="today-jump-btn" style="display:none;">Jump to Today</button>
+    </div>
+  </nav>
+
+  <!-- CATEGORY & ACTION FILTERS -->
+  <div id="filterBar" class="filter-bar">
+    <button class="filter-chip active" data-cat="All">All</button>
+    <button class="filter-chip" data-cat="Transport">✈️ Transport</button>
+    <button class="filter-chip" data-cat="Stay">🏨 Stay</button>
+    <button class="filter-chip" data-cat="Activity">🏛️ Activity</button>
+    <button class="filter-chip" data-cat="Dining & Lounge">🍜 Dining & Lounge</button>
+    <button class="filter-chip" data-cat="Admin & Border">🛂 Admin & Border</button>
+    <button id="actionOnlyChip" class="filter-chip action-chip">⚠️ To Book / Balances</button>
+  </div>
+
+  <!-- MAIN ITINERARY FEED -->
+  <main class="container">
+    <div id="cardsList" class="cards-list">
+      <div class="state-box">
+        <h3>Loading South East Asia 2027...</h3>
+        <p>Fetching live Master schedule from Google Sheets.</p>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast">Copied to clipboard</div>
+
+  <script>
+    (() => {
+      // =========================================================
+      // 1. CONFIGURATION & CONSTANTS
+      // =========================================================
+      const SHEET_ID = "1p_j0-1xiMOSkQ2TMobGjqpoc3TNVxymt-lpXDZnUVcI";
+      const SHEET_NAME = "Master";
+      const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
+      const STORAGE_DATA_KEY = "sea2027_master_rows_v1";
+      const STORAGE_TIME_KEY = "sea2027_master_synced_v1";
+
+      const TRIP_START = "2027-02-06";
+      const TRIP_END = "2027-03-02";
+
+      const COUNTRY_FLAGS = {
+        "UK": "🇬🇧",
+        "Thailand": "🇹🇭",
+        "Cambodia": "🇰🇭",
+        "Vietnam": "🇻🇳"
+      };
+
+      const EXPECTED_HEADERS = [
+        "ID", "DayNum", "Date", "Country", "BaseLocation", "Location",
+        "TimeStart", "TimeEnd", "Category", "SubCategory", "Title",
+        "Summary", "Detail", "BookingRef", "BookingStatus", "FinancialNote",
+        "GuideKey", "MapCoords", "URL1Label", "URL1", "URL2Label", "URL2"
+      ];
+
+      // =========================================================
+      // 2. APPLICATION STATE
+      // =========================================================
+      let allRows = [];
+      let daysIndex = []; // [{ dayNum, date, country, hubs: [], formattedShort, formattedLong }]
+      let selectedDay = 1;
+      let selectedCategory = "All";
+      let actionOnlyFilter = false;
+      let expandedIds = new Set();
+      let simulatedDateTime = null; // { date: "YYYY-MM-DD", time: "HH:MM" }
+
+      // =========================================================
+      // 3. DOM REFERENCES
+      // =========================================================
+      const syncDot = document.getElementById("syncDot");
+      const syncStatus = document.getElementById("syncStatus");
+      const refreshBtn = document.getElementById("refreshBtn");
+      const refreshIcon = document.getElementById("refreshIcon");
+
+      const simToggleBtn = document.getElementById("simToggleBtn");
+      const simDrawer = document.getElementById("simDrawer");
+      const simDateInput = document.getElementById("simDateInput");
+      const simTimeInput = document.getElementById("simTimeInput");
+      const applySimBtn = document.getElementById("applySimBtn");
+      const clearSimBtn = document.getElementById("clearSimBtn");
+
+      const dayStrip = document.getElementById("dayStrip");
+      const prevDayBtn = document.getElementById("prevDayBtn");
+      const nextDayBtn = document.getElementById("nextDayBtn");
+      const dayHeading = document.getElementById("dayHeading");
+      const dayHub = document.getElementById("dayHub");
+      const jumpTodayBtn = document.getElementById("jumpTodayBtn");
+
+      const filterBar = document.getElementById("filterBar");
+      const actionOnlyChip = document.getElementById("actionOnlyChip");
+      const cardsList = document.getElementById("cardsList");
+      const toastEl = document.getElementById("toast");
+
+      // =========================================================
+      // 4. GOOGLE SHEETS GVIZ FETCH & PARSER
+      // =========================================================
+      function parseGvizResponse(rawText) {
+        // Strip Google Visualization wrapper: /*O_o*/ google.visualization.Query.setResponse({...});
+        const startIdx = rawText.indexOf("{");
+        const endIdx = rawText.lastIndexOf("}");
+        if (startIdx === -1 || endIdx === -1) {
+          throw new Error("Invalid GViz payload format");
+        }
+        const json = JSON.parse(rawText.slice(startIdx, endIdx + 1));
+        if (json.status === "error") {
+          throw new Error(json.errors?.[0]?.detailed_message || "Google Sheets query error");
+        }
+
+        const table = json.table;
+        const cols = table.cols.map(c => (c.label || "").trim());
+
+        // Map column labels to indices; fallback to positional index if labels are blank
+        const colMap = {};
+        EXPECTED_HEADERS.forEach((header, fallbackIdx) => {
+          const foundIdx = cols.findIndex(c => c.toLowerCase() === header.toLowerCase());
+          colMap[header] = foundIdx !== -1 ? foundIdx : fallbackIdx;
+        });
+
+        const parsedRows = (table.rows || []).map(r => {
+          const cells = r.c || [];
+          const getVal = (key) => {
+            const idx = colMap[key];
+            const cell = cells[idx];
+            if (!cell || cell.v === null || cell.v === undefined) return "";
+            // Prefer formatted value (f) for dates/times if plain-text string wasn't enforced, else raw (v)
+            if (key === "Date" || key === "TimeStart" || key === "TimeEnd") {
+              return String(cell.f || cell.v).trim();
+            }
+            return String(cell.v).trim();
+          };
+
+          const idNum = parseInt(getVal("ID"), 10);
+          const dayNum = parseInt(getVal("DayNum"), 10);
+
+          return {
+            ID: isNaN(idNum) ? 999999 : idNum,
+            DayNum: isNaN(dayNum) ? 1 : dayNum,
+            Date: normalizeIsoDate(getVal("Date")),
+            Country: getVal("Country"),
+            BaseLocation: getVal("BaseLocation"),
+            Location: getVal("Location"),
+            TimeStart: normalizeTime(getVal("TimeStart")),
+            TimeEnd: normalizeTime(getVal("TimeEnd")),
+            Category: getVal("Category"),
+            SubCategory: getVal("SubCategory"),
+            Title: getVal("Title"),
+            Summary: getVal("Summary"),
+            Detail: getVal("Detail"),
+            BookingRef: getVal("BookingRef"),
+            BookingStatus: getVal("BookingStatus"),
+            FinancialNote: getVal("FinancialNote"),
+            GuideKey: getVal("GuideKey"),
+            MapCoords: getVal("MapCoords"),
+            URL1Label: getVal("URL1Label"),
+            URL1: getVal("URL1"),
+            URL2Label: getVal("URL2Label"),
+            URL2: getVal("URL2")
+          };
+        }).filter(row => row.Title && !isNaN(row.DayNum));
+
+        // Deterministic sort by ID
+        parsedRows.sort((a, b) => a.ID - b.ID);
+        return parsedRows;
+      }
+
+      function normalizeIsoDate(raw) {
+        if (!raw) return "";
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+        // Handle Date(2027,1,6) format if Sheet cell wasn't plain text
+        const match = raw.match(/Date\((\d+),(\d+),(\d+)\)/);
+        if (match) {
+          const y = match[1];
+          const m = String(parseInt(match[2], 10) + 1).padStart(2, "0");
+          const d = String(parseInt(match[3], 10)).padStart(2, "0");
+          return `${y}-${m}-${d}`;
+        }
+        return raw;
+      }
+
+      function normalizeTime(raw) {
+        if (!raw) return "";
+        if (/^\d{1,2}:\d{2}$/.test(raw)) {
+          return raw.padStart(5, "0");
+        }
+        const match = raw.match(/Date\(\d+,\d+,\d+,(\d+),(\d+)/);
+        if (match) {
+          return `${String(match[1]).padStart(2, "0")}:${String(match[2]).padStart(2, "0")}`;
+        }
+        return raw;
+      }
+
+      async function loadData(forceNetwork = false) {
+        const cachedRaw = localStorage.getItem(STORAGE_DATA_KEY);
+        const cachedTime = localStorage.getItem(STORAGE_TIME_KEY);
+
+        if (cachedRaw && !forceNetwork) {
+          try {
+            allRows = JSON.parse(cachedRaw);
+            buildDaysIndex();
+            initializeDaySelection();
+            renderAll();
+            updateSyncIndicator("cached", cachedTime);
+          } catch (e) {
+            console.warn("Cache parse error, falling back to network", e);
+          }
+        }
+
+        // Always fetch fresh in background (or foreground if no cache)
+        refreshIcon.classList.add("spin");
+        try {
+          const res = await fetch(GVIZ_URL, { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const text = await res.text();
+          const freshRows = parseGvizResponse(text);
+
+          if (freshRows.length > 0) {
+            allRows = freshRows;
+            const nowIso = new Date().toISOString();
+            localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(allRows));
+            localStorage.setItem(STORAGE_TIME_KEY, nowIso);
+
+            buildDaysIndex();
+            if (!cachedRaw) initializeDaySelection();
+            renderAll();
+            updateSyncIndicator("live", nowIso);
+            if (forceNetwork) showToast("Itinerary synced with Google Sheets");
+          }
+        } catch (err) {
+          console.error("Sync failed:", err);
+          if (allRows.length > 0) {
+            updateSyncIndicator("offline", cachedTime);
+            if (forceNetwork) showToast("Offline — showing cached itinerary");
+          } else {
+            updateSyncIndicator("error", null);
+            cardsList.innerHTML = `
+              <div class="state-box">
+                <h3>Unable to load itinerary</h3>
+                <p>Ensure the Google Sheet is shared as "Anyone with the link can view" and check your connection.</p>
+              </div>
+            `;
+          }
+        } finally {
+          refreshIcon.classList.remove("spin");
+        }
+      }
+
+      function updateSyncIndicator(state, isoTimestamp) {
+        syncDot.className = "sync-dot";
+        const timeStr = isoTimestamp ? formatRelativeTime(isoTimestamp) : "";
+        if (state === "live") {
+          syncStatus.textContent = `Live • Synced ${timeStr}`;
+        } else if (state === "cached") {
+          syncStatus.textContent = `Cached (${timeStr}) • Updating...`;
+        } else if (state === "offline") {
+          syncDot.classList.add("offline");
+          syncStatus.textContent = `Offline cache • Last synced ${timeStr}`;
+        } else {
+          syncDot.classList.add("error");
+          syncStatus.textContent = "Sync failed";
+        }
+      }
+
+      function formatRelativeTime(iso) {
+        const diffSec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+        if (diffSec < 60) return "just now";
+        if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+        if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+        return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+      }
+
+      // =========================================================
+      // 5. DATE & DAY INDEXING
+      // =========================================================
+      function buildDaysIndex() {
+        const map = new Map();
+        allRows.forEach(row => {
+          if (!map.has(row.DayNum)) {
+            map.set(row.DayNum, {
+              dayNum: row.DayNum,
+              date: row.Date,
+              countries: new Set(),
+              hubs: new Set()
+            });
+          }
+          const entry = map.get(row.DayNum);
+          if (row.Country) entry.countries.add(row.Country);
+          if (row.BaseLocation) entry.hubs.add(row.BaseLocation);
+        });
+
+        daysIndex = Array.from(map.values())
+          .sort((a, b) => a.dayNum - b.dayNum)
+          .map(d => {
+            const { shortLabel, longLabel } = formatTripDate(d.date);
+            return {
+              dayNum: d.dayNum,
+              date: d.date,
+              countries: Array.from(d.countries),
+              hubs: Array.from(d.hubs),
+              shortLabel,
+              longLabel
+            };
+          });
+      }
+
+      function formatTripDate(isoDate) {
+        if (!isoDate || !isoDate.includes("-")) {
+          return { shortLabel: "", longLabel: "" };
+        }
+        const [y, m, d] = isoDate.split("-").map(Number);
+        const dt = new Date(Date.UTC(y, m - 1, d));
+        const weekdayShort = dt.toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" });
+        const dayMonth = dt.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+        return {
+          shortLabel: `${weekdayShort} ${dayMonth}`,
+          longLabel: `${weekdayShort}, ${dayMonth} ${y}`
+        };
+      }
+
+      function getCurrentDateTime() {
+        if (simulatedDateTime) {
+          return simulatedDateTime;
+        }
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, "0");
+        const dd = String(now.getDate()).padStart(2, "0");
+        const hh = String(now.getHours()).padStart(2, "0");
+        const min = String(now.getMinutes()).padStart(2, "0");
+        return { date: `${yyyy}-${mm}-${dd}`, time: `${hh}:${min}` };
+      }
+
+      function getActiveTripDayNum() {
+        const { date } = getCurrentDateTime();
+        const match = daysIndex.find(d => d.date === date);
+        return match ? match.dayNum : null;
+      }
+
+      function initializeDaySelection() {
+        const params = new URLSearchParams(window.location.search);
+        const paramDay = parseInt(params.get("day"), 10);
+
+        if (!isNaN(paramDay) && daysIndex.some(d => d.dayNum === paramDay)) {
+          selectedDay = paramDay;
+          return;
+        }
+
+        const todayDay = getActiveTripDayNum();
+        if (todayDay !== null) {
+          selectedDay = todayDay;
+        } else if (daysIndex.length > 0) {
+          selectedDay = daysIndex[0].dayNum;
+        }
+      }
+
+      // =========================================================
+      // 6. RENDERING ENGINE
+      // =========================================================
+      function renderAll() {
+        renderDayStrip();
+        renderDayBanner();
+        renderCards();
+        scrollActivePillIntoView();
+      }
+
+      function renderDayStrip() {
+        const activeTripDay = getActiveTripDayNum();
+        dayStrip.innerHTML = daysIndex.map(d => {
+          const isSelected = d.dayNum === selectedDay;
+          const isToday = d.dayNum === activeTripDay;
+          return `
+            <button class="day-pill ${isSelected ? "active" : ""} ${isToday ? "today-marker" : ""}"
+                    data-day="${d.dayNum}"
+                    role="tab"
+                    aria-selected="${isSelected}">
+              <span class="dp-num">Day ${d.dayNum}</span>
+              <span class="dp-date">${escapeHtml(d.shortLabel)}</span>
+            </button>
+          `;
+        }).join("");
+
+        const idx = daysIndex.findIndex(d => d.dayNum === selectedDay);
+        prevDayBtn.disabled = idx <= 0;
+        nextDayBtn.disabled = idx === -1 || idx >= daysIndex.length - 1;
+      }
+
+      function renderDayBanner() {
+        const dayMeta = daysIndex.find(d => d.dayNum === selectedDay);
+        if (!dayMeta) return;
+
+        const flags = dayMeta.countries
+          .map(c => COUNTRY_FLAGS[c] || "")
+          .filter(Boolean)
+          .join(" ");
+
+        dayHeading.innerHTML = `<span>Day ${dayMeta.dayNum}</span> <span style="font-weight:500; color:var(--text-secondary);">• ${escapeHtml(dayMeta.longLabel)}</span>`;
+        dayHub.innerHTML = `${flags ? `<span>${flags}</span>` : ""} <span>${escapeHtml(dayMeta.hubs.join(" → ") || dayMeta.countries.join(" / "))}</span>`;
+
+        const activeTripDay = getActiveTripDayNum();
+        if (activeTripDay !== null && activeTripDay !== selectedDay) {
+          jumpTodayBtn.style.display = "inline-block";
+          jumpTodayBtn.textContent = `Jump to Today (Day ${activeTripDay})`;
+        } else {
+          jumpTodayBtn.style.display = "none";
+        }
+      }
+
+      function renderCards() {
+        let dayRows = allRows.filter(r => r.DayNum === selectedDay);
+
+        if (selectedCategory !== "All") {
+          dayRows = dayRows.filter(r => r.Category === selectedCategory);
+        }
+
+        if (actionOnlyFilter) {
+          dayRows = dayRows.filter(r =>
+            r.BookingStatus === "To Book" ||
+            r.BookingStatus === "Deposit Paid" ||
+            Boolean(r.FinancialNote)
+          );
+        }
+
+        if (dayRows.length === 0) {
+          cardsList.innerHTML = `
+            <div class="state-box">
+              <h3>No matching items</h3>
+              <p>Try switching back to "All" categories or clearing the action filter.</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Determine "Up Next" event if viewing today's active trip day
+        const activeTripDay = getActiveTripDayNum();
+        const { time: nowTime } = getCurrentDateTime();
+        let upNextId = null;
+
+        if (activeTripDay === selectedDay) {
+          // Find first event that hasn't ended yet (or starts at/after current time)
+          const upcoming = dayRows.find(r => {
+            const compareTime = r.TimeEnd || r.TimeStart;
+            return compareTime && compareTime >= nowTime;
+          });
+          if (upcoming) upNextId = upcoming.ID;
+        }
+
+        cardsList.innerHTML = dayRows.map(row => buildCardHTML(row, row.ID === upNextId)).join("");
+      }
+
+      function buildCardHTML(row, isUpNext) {
+        const isExpanded = expandedIds.has(row.ID);
+        const timeStr = row.TimeStart
+          ? (row.TimeEnd ? `${row.TimeStart} – ${row.TimeEnd}` : row.TimeStart)
+          : "Flexible";
+
+        const statusClass = getStatusClass(row.BookingStatus);
+        const hasRef = row.BookingRef && row.BookingRef !== "N/A";
+        const hasCoords = Boolean(row.MapCoords && row.MapCoords.includes(","));
+        const mapsUrl = hasCoords
+          ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(row.MapCoords)}`
+          : "";
+        const guideUrl = row.GuideKey
+          ? `guide.html?site=${encodeURIComponent(row.GuideKey)}&day=${encodeURIComponent(row.DayNum)}`
+          : "";
+
+        return `
+          <article class="event-card ${isExpanded ? "expanded" : ""} ${isUpNext ? "is-up-next" : ""}"
+                   data-id="${row.ID}"
+                   data-category="${escapeHtml(row.Category)}">
+
+            ${isUpNext ? `<div class="up-next-ribbon">⚡ Current / Up Next</div>` : ""}
+
+            <div class="card-header" data-toggle-id="${row.ID}">
+              <div class="card-top-meta">
+                <span class="time-badge">${escapeHtml(timeStr)}</span>
+                <span class="cat-pill">${escapeHtml(row.Category)}${row.SubCategory ? ` • ${escapeHtml(row.SubCategory)}` : ""}</span>
+              </div>
+
+              <div class="card-title-row">
+                <h2 class="card-title">${escapeHtml(row.Title)}</h2>
+                <span class="chevron">▼</span>
+              </div>
+
+              ${row.Location ? `<div class="card-location">📍 ${escapeHtml(row.Location)}</div>` : ""}
+              ${row.Summary ? `<p class="card-summary">${escapeHtml(row.Summary)}</p>` : ""}
+
+              <div class="card-footer-pills">
+                ${row.BookingStatus ? `<span class="status-pill ${statusClass}">${escapeHtml(row.BookingStatus)}</span>` : ""}
+                ${hasRef ? `<button class="ref-pill" data-copy="${escapeHtml(row.BookingRef)}" title="Tap to copy reference">Ref: ${escapeHtml(row.BookingRef)} ⧉</button>` : ""}
+                ${row.GuideKey ? `<span class="guide-mini-tag">🗺️ Site Guide</span>` : ""}
+              </div>
+            </div>
+
+            <div class="card-drawer">
+              ${row.Detail ? `<div class="detail-text">${escapeHtml(row.Detail)}</div>` : ""}
+
+              ${row.FinancialNote ? `
+                <div class="financial-callout">
+                  <span>💳</span>
+                  <div>
+                    <strong>Payment & Balance Note</strong>
+                    <span>${escapeHtml(row.FinancialNote)}</span>
+                  </div>
+                </div>
+              ` : ""}
+
+              <div class="drawer-actions">
+                ${guideUrl ? `
+                  <a href="${guideUrl}" class="action-btn btn-guide">
+                    <span>🧭 Open Site Guide</span>
+                    <span>→</span>
+                  </a>
+                ` : ""}
+
+                ${hasCoords ? `
+                  <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="action-btn btn-map">
+                    <span>📍 Navigate</span>
+                  </a>
+                ` : ""}
+
+                ${row.URL1 && row.URL1Label ? `
+                  <a href="${escapeHtml(row.URL1)}" target="_blank" rel="noopener noreferrer" class="action-btn">
+                    <span>🔗 ${escapeHtml(row.URL1Label)}</span>
+                  </a>
+                ` : ""}
+
+                ${row.URL2 && row.URL2Label ? `
+                  <a href="${escapeHtml(row.URL2)}" target="_blank" rel="noopener noreferrer" class="action-btn">
+                    <span>🔗 ${escapeHtml(row.URL2Label)}</span>
+                  </a>
+                ` : ""}
+              </div>
+            </div>
+          </article>
+        `;
+      }
+
+      function getStatusClass(status) {
+        if (status === "Confirmed") return "status-Confirmed";
+        if (status === "Deposit Paid") return "status-DepositPaid";
+        if (status === "To Book") return "status-ToBook";
+        return "status-Neutral";
+      }
+
+      function scrollActivePillIntoView() {
+        const activePill = dayStrip.querySelector(".day-pill.active");
+        if (activePill) {
+          activePill.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+        }
+      }
+
+      function selectDay(dayNum) {
+        if (selectedDay === dayNum) return;
+        selectedDay = dayNum;
+        // Keep URL query param in sync without page reload
+        const url = new URL(window.location.href);
+        url.searchParams.set("day", String(dayNum));
+        window.history.replaceState({}, "", url);
+
+        renderAll();
+      }
+
+      function escapeHtml(str) {
+        if (!str) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      let toastTimer = null;
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2200);
+      }
+
+      // =========================================================
+      // 7. EVENT LISTENERS
+      // =========================================================
+      dayStrip.addEventListener("click", (e) => {
+        const pill = e.target.closest(".day-pill");
+        if (!pill) return;
+        selectDay(parseInt(pill.dataset.day, 10));
+      });
+
+      prevDayBtn.addEventListener("click", () => {
+        const idx = daysIndex.findIndex(d => d.dayNum === selectedDay);
+        if (idx > 0) selectDay(daysIndex[idx - 1].dayNum);
+      });
+
+      nextDayBtn.addEventListener("click", () => {
+        const idx = daysIndex.findIndex(d => d.dayNum === selectedDay);
+        if (idx !== -1 && idx < daysIndex.length - 1) selectDay(daysIndex[idx + 1].dayNum);
+      });
+
+      jumpTodayBtn.addEventListener("click", () => {
+        const todayDay = getActiveTripDayNum();
+        if (todayDay !== null) selectDay(todayDay);
+      });
+
+      filterBar.addEventListener("click", (e) => {
+        const chip = e.target.closest(".filter-chip");
+        if (!chip) return;
+
+        if (chip.id === "actionOnlyChip") {
+          actionOnlyFilter = !actionOnlyFilter;
+          chip.classList.toggle("active", actionOnlyFilter);
+          renderCards();
+          return;
+        }
+
+        const cat = chip.dataset.cat;
+        if (cat) {
+          selectedCategory = cat;
+          filterBar.querySelectorAll(".filter-chip[data-cat]").forEach(c => {
+            c.classList.toggle("active", c.dataset.cat === selectedCategory);
+          });
+          renderCards();
+        }
+      });
+
+      cardsList.addEventListener("click", (e) => {
+        // Handle booking reference copy without toggling accordion
+        const copyBtn = e.target.closest("[data-copy]");
+        if (copyBtn) {
+          e.stopPropagation();
+          const ref = copyBtn.dataset.copy;
+          navigator.clipboard?.writeText(ref).then(() => {
+            showToast(`Copied ${ref}`);
+          }).catch(() => {
+            showToast(`Ref: ${ref}`);
+          });
+          return;
+        }
+
+        // Toggle card detail drawer
+        const header = e.target.closest("[data-toggle-id]");
+        if (header) {
+          const id = parseInt(header.dataset.toggleId, 10);
+          if (expandedIds.has(id)) {
+            expandedIds.delete(id);
+          } else {
+            expandedIds.add(id);
+          }
+          const card = header.closest(".event-card");
+          if (card) card.classList.toggle("expanded", expandedIds.has(id));
+        }
+      });
+
+      refreshBtn.addEventListener("click", () => loadData(true));
+
+      // Simulator Controls
+      simToggleBtn.addEventListener("click", () => {
+        simDrawer.classList.toggle("open");
+        simToggleBtn.classList.toggle("active", simDrawer.classList.contains("open"));
+      });
+
+      applySimBtn.addEventListener("click", () => {
+        if (!simDateInput.value) return;
+        simulatedDateTime = {
+          date: simDateInput.value,
+          time: simTimeInput.value || "08:00"
+        };
+        const simDay = getActiveTripDayNum();
+        if (simDay !== null) selectedDay = simDay;
+        renderAll();
+        showToast(`Simulating ${simulatedDateTime.date} at ${simulatedDateTime.time}`);
+      });
+
+      clearSimBtn.addEventListener("click", () => {
+        simulatedDateTime = null;
+        initializeDaySelection();
+        renderAll();
+        showToast("Reset to live device clock");
+      });
+
+      // Boot
+      loadData(false);
+    })();
+  </script>
+</body>
+</html>
